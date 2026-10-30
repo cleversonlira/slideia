@@ -24,6 +24,14 @@ import {
   signupPage,
   type PageContext,
 } from "./pages.js";
+import {
+  connectPage,
+  landingPage,
+  privacyPage,
+  supportPage,
+  termsPage,
+  type PublicInfo,
+} from "./public-pages.js";
 import { PgPresentationRepo } from "./pg-repo.js";
 import type { Sql } from "./sql.js";
 
@@ -844,37 +852,25 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   });
 
   // ---------------------------------------------------------------------------
-  // Public pages (full versions in phase 4)
+  // Public pages (landing at "/" is served below, for anonymous visitors of the editor root)
   // ---------------------------------------------------------------------------
 
-  const info = (title: string, text: string) => (_req: Request, res: Response) => {
-    res.type("html").send(messagePage(pc, title, text));
+  const publicInfo: PublicInfo = {
+    supportEmail: config.supportEmail,
+    mcpUrl: oauth.resource,
+    operatorName: config.operatorName,
+    limits: config.limits,
+    linkTtlHours: Math.round(config.linkTtl / 3600),
   };
-  app.get(
-    "/privacidade",
-    info(
-      "Política de privacidade",
-      `Guardamos apenas o necessário para o serviço funcionar: sua conta, suas apresentações e imagens. Não usamos o conteúdo para treinar modelos nem o compartilhamos. Você pode exportar ou excluir seus dados em Minha conta. Contato: ${config.supportEmail}.`,
-    ),
-  );
-  app.get(
-    "/termos",
-    info(
-      "Termos de uso",
-      `Ao usar ${config.productName} você mantém todos os direitos sobre suas apresentações e se compromete a não enviar conteúdo ilegal. O serviço é oferecido como está. Contato: ${config.supportEmail}.`,
-    ),
-  );
-  app.get(
-    "/suporte",
-    info("Suporte", `Escreva para ${config.supportEmail}. Respondemos em até 2 dias úteis.`),
-  );
-  app.get(
-    "/como-conectar",
-    info(
-      "Como conectar",
-      `No ChatGPT ou no Claude, adicione um conector MCP com o endereço ${oauth.resource} e entre com sua conta quando for solicitado.`,
-    ),
-  );
+  const publicPage =
+    (render: (ctx: PageContext, p: PublicInfo) => string) => (_req: Request, res: Response) => {
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.type("html").send(render(pc, publicInfo));
+    };
+  app.get("/privacidade", publicPage(privacyPage));
+  app.get("/termos", publicPage(termsPage));
+  app.get("/suporte", publicPage(supportPage));
+  app.get("/como-conectar", publicPage(connectPage));
 
   // ---------------------------------------------------------------------------
   // Signed links (download / present without a session: they work from the chat)
@@ -1037,6 +1033,10 @@ export function createRemoteApp(ctx: RemoteContext): Express {
         return user?.emailVerified ? user.id : null;
       },
       onAnonymousPage(req, res) {
+        if (req.path === "/") {
+          res.type("html").send(landingPage(pc, publicInfo));
+          return;
+        }
         res.redirect(302, `/entrar?next=${encodeURIComponent(req.originalUrl)}`);
       },
       async account(req) {

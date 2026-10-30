@@ -38,7 +38,12 @@ test.afterAll(async () => {
 
 test("sign up, verify e-mail and create a presentation in the editor", async ({ page }, info) => {
   await page.goto(base);
-  await expect(page).toHaveURL(/\/entrar/);
+  // Anonymous visitors of the root see the landing page.
+  await expect(
+    page.getByRole("heading", { name: /Apresentações criadas pela sua IA/ }),
+  ).toBeVisible();
+  await page.screenshot({ path: info.outputPath("landing.png") });
+  await page.goto(`${base}/entrar?next=%2F`);
   await page.screenshot({ path: info.outputPath("login.png") });
   await page.getByRole("link", { name: "Criar conta" }).click();
   await page.getByLabel("Nome").fill("Joana");
@@ -122,7 +127,7 @@ test("OAuth consent screen authorizes an app and the account page lists it", asy
 });
 
 test("editor switches light/dark theme and signs out", async ({ page }) => {
-  await page.goto(base);
+  await page.goto(`${base}/entrar`);
   await page.getByLabel("E-mail").fill("joana@exemplo.com");
   await page.getByLabel("Senha").fill("senha-forte-123");
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -141,5 +146,19 @@ test("editor switches light/dark theme and signs out", async ({ page }) => {
   await expect(page).toHaveURL(/\/entrar/);
   expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(401);
   await page.goto(base);
-  await expect(page).toHaveURL(/\/entrar/);
+  await expect(page.getByRole("link", { name: "Criar conta grátis" })).toBeVisible();
+});
+
+test("public pages: how to connect, privacy, terms and support", async ({ page }) => {
+  for (const [path, heading] of [
+    ["/como-conectar", "Como conectar sua IA"],
+    ["/privacidade", "Política de privacidade"],
+    ["/termos", "Termos de uso"],
+    ["/suporte", "Suporte"],
+  ] as const) {
+    await page.goto(`${base}${path}`);
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Como conectar" }).last()).toBeVisible();
+  }
+  await expect(page.locator("main")).toContainText(`${base}/mcp`);
 });

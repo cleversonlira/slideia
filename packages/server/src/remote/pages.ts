@@ -34,6 +34,15 @@ a{color:var(--accent)}code{background:var(--bg);padding:1px 6px;border-radius:5p
 table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 4px;border-bottom:1px solid var(--border)}
 .dev{margin-top:14px;padding:10px 12px;border:1px dashed #c9a227;border-radius:9px;background:#fffbea;font-size:13px;word-break:break-all}
 footer{margin-top:24px;text-align:center;font-size:13px;color:var(--muted)}footer a{color:var(--muted)}
+.doc h1{font-size:26px}.doc h2{font-size:18px;margin:26px 0 6px}.doc h3{font-size:16px;margin:18px 0 4px}
+.doc ul,.doc ol{padding-left:22px;margin:8px 0}.doc li{margin:4px 0}.doc .muted{font-size:14px}
+.doc table td,.doc table th{text-align:left;vertical-align:top;padding:8px 6px;border-bottom:1px solid var(--border)}
+.url{display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font:15px ui-monospace,Menlo,Consolas,monospace;word-break:break-all;margin:10px 0}
+.hero{text-align:center;padding:24px 0 8px}.hero h1{font-size:34px;line-height:1.15;margin:0 0 12px}.hero p{font-size:18px;color:var(--muted);max-width:560px;margin:0 auto}
+.hero .row{justify-content:center;margin-top:22px;flex-wrap:wrap}.hero .row>*{flex:0 0 auto;min-width:150px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}.grid .card{padding:18px}
+.grid h3{margin:0 0 6px;font-size:16px}.steps{counter-reset:s;list-style:none;padding:0}.steps li{counter-increment:s;padding:8px 0 8px 40px;position:relative}
+.steps li:before{content:counter(s);position:absolute;left:0;top:6px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
 `;
 
 export interface PageContext {
@@ -44,14 +53,14 @@ export function page(
   ctx: PageContext,
   title: string,
   body: string,
-  opts: { wide?: boolean } = {},
+  opts: { wide?: boolean; width?: number } = {},
 ): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer"><title>${h(title)} · ${h(ctx.productName)}</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>${CSS}${opts.wide ? "main{max-width:720px}" : ""}</style></head>
+<style>${CSS}${opts.width ? `main{max-width:${opts.width}px}` : opts.wide ? "main{max-width:720px}" : ""}</style></head>
 <body><main><a class="brand" href="/"><img src="/favicon.svg" alt="" width="34" height="34">${h(ctx.productName)}</a>${body}
-<footer><a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a> · <a href="/suporte">Suporte</a></footer></main></body></html>`;
+<footer><a href="/como-conectar">Como conectar</a> · <a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a> · <a href="/suporte">Suporte</a></footer></main></body></html>`;
 }
 
 const csrfField = (csrf: string) => `<input type="hidden" name="csrf" value="${h(csrf)}">`;

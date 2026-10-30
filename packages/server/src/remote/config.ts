@@ -40,6 +40,8 @@ export interface RemoteConfig extends Config {
   linkTtl: number;
   supportEmail: string;
   productName: string;
+  /** Data controller named in the privacy policy and terms (a person or company). */
+  operatorName: string | null;
 }
 
 function required(env: NodeJS.ProcessEnv, key: string, fallback?: string): string {
@@ -116,6 +118,7 @@ export function loadRemoteConfig(env: NodeJS.ProcessEnv = process.env): RemoteCo
     refreshTokenTtl: Number(env.REFRESH_TOKEN_TTL ?? 30 * 24 * 3600),
     linkTtl: Number(env.LINK_TTL ?? 24 * 3600),
     supportEmail: env.SUPPORT_EMAIL ?? "suporte@example.com",
-    productName: env.PRODUCT_NAME ?? "Apresenta",
+    productName: env.PRODUCT_NAME ?? "SlideIA",
+    operatorName: env.OPERATOR_NAME?.trim() || null,
   };
 }
