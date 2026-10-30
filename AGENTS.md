@@ -10,11 +10,12 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
 - Fase 2 (servidor MCP local stdio + editor visual): **concluída**.
 - Fase 3 (servidor remoto: MCP HTTP + OAuth 2.1 + contas + Postgres/S3), simulado localmente: **concluída**
   (detalhes em `docs/REMOTO.md`).
-- Fase 4: páginas públicas e **widget no chat (MCP Apps)** feitos; material de submissão e `.mcpb`
-  pendentes.
+- Fase 4: páginas públicas, **widget no chat (MCP Apps)** e marca da empresa no tema feitos;
+  material de submissão em `docs/SUBMISSAO.md` (falta enviar); `.mcpb` pendente.
 - Produção: **https://slideia.site** (MCP em `/mcp`) numa VPS própria, via `deploy/vps/` (Docker
   Compose + Postgres atrás do nginx do host, TLS pelo certbot, backup diário). E-mail por SMTP da
-  Hostinger (`suporte@slideia.site`, `deploy/vps/set-smtp.sh`).
+  Hostinger (`suporte@slideia.site`, `deploy/vps/set-smtp.sh`). Alertas por e-mail via
+  `deploy/vps/watchdog.sh`; `restore-test.sh` prova que o backup restaura.
 
 ## Pacotes
 
