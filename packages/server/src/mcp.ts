@@ -705,6 +705,28 @@ const isEmptyObject = (v: unknown) =>
   !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0;
 
 /** Rewrites the SDK's tools/list answer with portableSchema (validation still uses Zod). */
+/**
+ * Everything a host may cache from this server: the tool, prompt and resource lists and the
+ * widget HTML. Used to detect a changed surface after a deploy (remote/list-changes.ts).
+ */
+export async function publishedSurface(server: McpServer): Promise<unknown[]> {
+  type Handler = (req: unknown, extra: unknown) => Promise<unknown>;
+  const handlers = (server.server as unknown as { _requestHandlers: Map<string, Handler> })
+    ._requestHandlers;
+  const parts: unknown[] = [];
+  for (const method of [
+    "tools/list",
+    "prompts/list",
+    "resources/list",
+    "resources/templates/list",
+  ]) {
+    const h = handlers.get(method);
+    parts.push(h ? await h({ method, params: {} }, {}) : null);
+  }
+  parts.push(await buildWidgetHtml());
+  return parts;
+}
+
 function portableToolSchemas(server: McpServer): void {
   type Handler = (
     req: unknown,

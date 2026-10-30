@@ -201,7 +201,21 @@ type ToolResult = {
 };
 
 beforeAll(async () => {
-  rt = await startRemote(await makeConfig({ JWT_PRIVATE_KEY: generateJwtKeyPem() }), { mailer });
+  // Two boots on the same database, like a deploy: the first one published another surface, so
+  // this one must announce the changed tool list (see "announces a changed tool list").
+  const dbDir = mkdtempSync(join(tmpdir(), "apresenta-remote-db-"));
+  dirs.push(dbDir);
+  const config = await makeConfig({
+    JWT_PRIVATE_KEY: generateJwtKeyPem(),
+    DATABASE_URL: `pglite:${dbDir}`,
+  });
+  const previous = await startRemote(config, { mailer, listen: false });
+  await previous.ctx.sql.query(
+    "INSERT INTO meta (key, value) VALUES ('mcp_surface', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+    [JSON.stringify({ hash: "previous-deploy", changedAt: null })],
+  );
+  await previous.close();
+  rt = await startRemote(config, { mailer });
   base = rt.ctx.config.publicUrl;
 }, 60_000);
 
@@ -295,6 +309,66 @@ describe("OAuth + MCP with the official SDK client", () => {
     provider = new TestProvider(browser, "http://127.0.0.1:9/callback");
     client = await connectWithOAuth(provider);
   }, 60_000);
+
+  it("announces a changed tool list once per client, on listen and on GET streams", async () => {
+    const connect = async (n: number) => {
+      const p = new TestProvider(browser, `http://127.0.0.1:9/callback-${n}`);
+      await (await connectWithOAuth(p)).close();
+      return p.saved!.access_token;
+    };
+    const firstChunk = async (token: string) => {
+      const ctrl = new AbortController();
+      const res = await fetch(`${base}/mcp`, {
+        headers: { accept: "text/event-stream", authorization: `Bearer ${token}` },
+        signal: ctrl.signal,
+      });
+      const reader = res.body!.getReader();
+      let text = "";
+      const until = Date.now() + 400;
+      while (Date.now() < until) {
+        const chunk = await Promise.race([
+          reader.read(),
+          new Promise<null>((r) => setTimeout(() => r(null), until - Date.now())),
+        ]);
+        if (!chunk || chunk.done) break;
+        text += new TextDecoder().decode(chunk.value);
+      }
+      ctrl.abort();
+      return text;
+    };
+
+    // 2026-07-28 client: the notice arrives on its subscriptions/listen stream.
+    const modernToken = await connect(1);
+    const modern = new ModernClient(
+      { name: "modern", version: "1" },
+      { versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
+    await modern.connect(
+      new ModernHttpTransport(new URL(`${base}/mcp`), {
+        authProvider: { token: async () => modernToken },
+      }),
+    );
+    const changed = new Promise<string>((resolve) =>
+      modern.setNotificationHandler("notifications/tools/list_changed", (n) => resolve(n.method)),
+    );
+    try {
+      const sub = await modern.listen({ toolsListChanged: true });
+      expect(sub.honoredFilter.toolsListChanged).toBe(true);
+      expect(await changed).toBe("notifications/tools/list_changed");
+      await sub.close();
+    } finally {
+      await modern.close();
+    }
+    // Already told: its GET stream stays quiet.
+    expect(await firstChunk(modernToken)).not.toContain("list_changed");
+
+    // 2025-era client: the notice is the first thing on its GET stream, only once.
+    const legacyToken = await connect(2);
+    const first = await firstChunk(legacyToken);
+    expect(first).toContain('"method":"notifications/tools/list_changed"');
+    expect(first).toContain('"method":"notifications/resources/list_changed"');
+    expect(await firstChunk(legacyToken)).not.toContain("list_changed");
+  });
 
   it("GET /mcp asks for a token, then opens an idle SSE stream", async () => {
     const anon = await fetch(`${base}/mcp`, { headers: { accept: "text/event-stream" } });
@@ -800,4 +874,29 @@ describe("LGPD", () => {
     ).toBe(0);
     await client.close().catch(() => undefined);
   }, 60_000);
+});
+
+describe("list change detection", () => {
+  it("records the surface and reports a change only after a different deploy", async () => {
+    const { openSql, migrate } = await import("../src/remote/sql.js");
+    const { ListChanges } = await import("../src/remote/list-changes.js");
+    const sql = await openSql("pglite:memory");
+    await migrate(sql);
+    let now = 1_000_000;
+    const clock = () => now;
+    expect((await ListChanges.init(sql, "a", clock)).changedAt).toBeNull(); // first boot
+    expect((await ListChanges.init(sql, "a", clock)).changedAt).toBeNull(); // same surface
+    now += 5;
+    const changed = await ListChanges.init(sql, "b", clock);
+    expect(changed.changedAt).toBe(now);
+    expect(changed.needsNotice("u:c")).toBe(true);
+    changed.saw("u:c");
+    expect(changed.needsNotice("u:c")).toBe(false);
+    // A restart without changes keeps the date; the notice expires after 30 days.
+    const again = await ListChanges.init(sql, "b", clock);
+    expect(again.changedAt).toBe(now);
+    now += 31 * 86_400_000;
+    expect(again.needsNotice("u:other")).toBe(false);
+    await sql.close();
+  });
 });

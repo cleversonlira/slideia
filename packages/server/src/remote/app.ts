@@ -5,13 +5,14 @@ import { createMcpHandler, type AuthInfo } from "@modelcontextprotocol/server";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import type { BlobStore } from "../blobs.js";
 import { mountEditor, readCookie, sendPresentationHtml } from "../http.js";
-import { createMcpServer } from "../mcp.js";
+import { VIEW_URI, createMcpServer, publishedSurface } from "../mcp.js";
 import type { Previewer } from "../preview.js";
 import { NotFoundError, PresentationService, type Links } from "../service.js";
 import { AccountError, type Accounts, type User } from "./accounts.js";
 import type { RemoteConfig } from "./config.js";
 import { hmac, randomToken, safeEqual, verifyHmac } from "./crypto.js";
 import type { Mailer } from "./mailer.js";
+import { LIST_CHANGED_METHODS, ListChanges, fingerprint } from "./list-changes.js";
 import { OAuthError, SCOPE_LABELS, type OAuthServer } from "./oauth.js";
 import { anon, log, type Metrics, type RateLimiter } from "./observability.js";
 import {
@@ -975,6 +976,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   // Optional server→client SSE stream (Streamable HTTP GET). This stateless server never sends
   // anything on it, but some clients (Gemini) open it before using the tools and give up on a
   // 405, so it answers with an idle stream: a heartbeat comment, closed after 10 minutes.
+  // It is also where 2025-era clients get the list_changed notices after a deploy.
   app.get("/mcp", async (req, res) => {
     const access = await mcpAccess(req, res);
     if (!access) return;
@@ -985,6 +987,15 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       "X-Accel-Buffering": "no",
     });
     res.write(": slideia\n\n");
+    const key = `${access.userId}:${access.clientId}`;
+    const changes = await listChanges;
+    const notice = changes?.needsNotice(key) ?? false;
+    if (notice) {
+      for (const method of LIST_CHANGED_METHODS)
+        res.write(`event: message\ndata: ${JSON.stringify({ jsonrpc: "2.0", method })}\n\n`);
+      changes!.saw(key);
+    }
+    log("mcp_stream", { kind: "get", user: anon(access.userId), client: access.clientId, notice });
     const beat = setInterval(() => res.write(": ping\n\n"), 25_000);
     const end = setTimeout(() => res.end(), 10 * 60_000);
     res.on("close", () => {
@@ -1020,6 +1031,37 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   );
   const mcpNode = toNodeHandler(mcpHandler, { onerror: (err) => console.error(err) });
 
+  /** Surface fingerprint vs. the previous deploy (null if it cannot be computed). */
+  const listChanges: Promise<ListChanges | null> = (async () => {
+    const server = createMcpServer(serviceFor("_surface"), ctx.previewer, { canWrite: true });
+    return ListChanges.init(ctx.sql, fingerprint(await publishedSurface(server)));
+  })().catch((err: unknown) => {
+    console.error("[mcp] list change detection disabled:", err);
+    return null;
+  });
+
+  /** Notes tools/list calls and announces a changed surface on new `subscriptions/listen`. */
+  const trackLists = async (body: unknown, userId: string, clientId: string) => {
+    const methods = (Array.isArray(body) ? body : [body]).map(
+      (m) => (m as { method?: unknown } | null)?.method,
+    );
+    const key = `${userId}:${clientId}`;
+    const changes = await listChanges;
+    if (methods.includes("tools/list")) changes?.saw(key);
+    if (!methods.includes("subscriptions/listen")) return;
+    const notice = changes?.needsNotice(key) ?? false;
+    log("mcp_stream", { kind: "listen", user: anon(userId), client: clientId, notice });
+    if (!notice) return;
+    changes!.saw(key);
+    // After the stream is acknowledged. Broadcast: other open streams just re-list once.
+    setTimeout(() => {
+      mcpHandler.notify.toolsChanged();
+      mcpHandler.notify.promptsChanged();
+      mcpHandler.notify.resourcesChanged();
+      mcpHandler.notify.resourceUpdated(VIEW_URI);
+    }, 1000).unref();
+  };
+
   app.post("/mcp", express.json({ limit: "25mb" }), async (req, res) => {
     const access = await mcpAccess(req, res);
     if (!access) return;
@@ -1040,6 +1082,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       extra: { userId: access.userId },
     };
     try {
+      await trackLists(req.body, access.userId, access.clientId);
       await mcpNode(req, res, req.body);
     } catch (err) {
       console.error(err);

@@ -623,8 +623,14 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
   `portableToolSchemas` (Gemini) continua necessário e funciona pelo mesmo `_requestHandlers`.
 - Testes: `server.test.ts` usa o cliente v2 em memória; `remote.test.ts` mantém o cliente v1 pela
   rede (prova a compatibilidade 2025) e tem um teste com o cliente v2 fixado em 2026-07-28.
-- Pendente: `subscriptions/listen` + `handler.notify` permitiriam avisar clientes 2026 quando a lista
-  de ferramentas muda (evitaria reconectar).
+- Aviso de lista alterada (`remote/list-changes.ts`): na subida, `publishedSurface` (tools, prompts,
+  resources e HTML do widget) vira uma impressão digital guardada em `meta.mcp_surface`. Se mudou
+  desde o deploy anterior, por 30 dias cada par (usuário, cliente) que abre um stream antes de
+  listar as tools de novo recebe uma vez os `notifications/*/list_changed`: no GET `/mcp` (era 2025)
+  escritos direto no SSE, e no `subscriptions/listen` (2026) via `handler.notify` (difusão para
+  todos os streams abertos; quem já tem a lista só lista de novo). O log `mcp_stream` mostra quais
+  clientes abrem streams. Claude e ChatGPT hoje só fazem POST; para eles reconectar o conector
+  ainda é o caminho quando o widget ou as tools mudam.
 
 
 ## 22. Marca da empresa e export sem imagens repetidas
