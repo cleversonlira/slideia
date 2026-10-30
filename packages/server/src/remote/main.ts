@@ -4,7 +4,8 @@
  *   node dist/remote.js            (configuration via environment variables, see .env.example)
  */
 import type { Server } from "node:http";
-import { DiskBlobStore, S3BlobStore, type BlobStore } from "../blobs.js";
+import { S3BlobStore } from "../blobs-s3.js";
+import { DiskBlobStore, type BlobStore } from "../blobs.js";
 import { importExamples } from "../examples.js";
 import { Previewer } from "../preview.js";
 import { PresentationService, createEvents } from "../service.js";

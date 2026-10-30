@@ -43,7 +43,12 @@ apresentação, confere com `preview` e devolve:
 - **link do editor** — clique em qualquer texto para editar; a IA vê suas alterações;
 - **link de download** — o `.html` final (também salvo em `~/Apresentacoes`).
 
-Claude Desktop, Cursor, VS Code e Gemini CLI usam a mesma configuração (`./iniciar.sh --mcp`
+**Claude Desktop:** `pnpm mcpb` gera `out/slideia-<versão>.mcpb` (macOS e Windows; Node 22.13+,
+que o Claude Desktop já traz). Dê dois cliques no arquivo, ou arraste-o para a janela do Claude
+Desktop, e escolha a pasta das apresentações. O editor abre no navegador; a prévia usa o Chrome ou
+o Edge instalado.
+
+Cursor, VS Code e Gemini CLI (e o Claude Desktop sem o pacote) usam a mesma configuração (`./iniciar.sh --mcp`
 imprime os trechos prontos). Para o Claude Code ensinar o fluxo ideal à IA, copie
 `skills/apresentacoes` para `~/.claude/skills/`.
 

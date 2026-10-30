@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { loadConfig, type Config } from "../config.js";
-import type { S3Options } from "../blobs.js";
+import type { S3Options } from "../blobs-s3.js";
 
 export interface StaticClient {
   client_id: string;

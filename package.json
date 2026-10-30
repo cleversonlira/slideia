@@ -18,9 +18,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "render": "pnpm --filter @slideia/renderer run render",
-    "examples": "pnpm --filter @slideia/renderer run examples"
+    "examples": "pnpm --filter @slideia/renderer run examples",
+    "mcpb": "tsx packages/server/scripts/build-mcpb.ts"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
     "@eslint/js": "^10.0.1",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@playwright/test": "^1.64.1",

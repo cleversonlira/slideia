@@ -11,7 +11,8 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
 - Fase 3 (servidor remoto: MCP HTTP + OAuth 2.1 + contas + Postgres/S3), simulado localmente: **concluída**
   (detalhes em `docs/REMOTO.md`).
 - Fase 4: páginas públicas, **widget no chat (MCP Apps)** e marca da empresa no tema feitos;
-  material de submissão em `docs/SUBMISSAO.md` (falta enviar); `.mcpb` pendente.
+  material de submissão em `docs/SUBMISSAO.md` (falta enviar); `.mcpb` para o Claude Desktop
+  (`pnpm mcpb`).
 - Produção: **https://slideia.site** (MCP em `/mcp`) numa VPS própria, via `deploy/vps/` (Docker
   Compose + Postgres atrás do nginx do host, TLS pelo certbot, backup diário). E-mail por SMTP da
   Hostinger (`suporte@slideia.site`, `deploy/vps/set-smtp.sh`). Alertas por e-mail via
@@ -89,6 +90,7 @@ pnpm test:e2e        # Playwright: player + fluxo MCP→editor→download (compi
 pnpm typecheck
 pnpm lint
 pnpm examples        # out/examples/*.html
+pnpm mcpb            # out/slideia-<versão>.mcpb (Claude Desktop)
 ./iniciar.sh --editor   # editor local com exemplos (http://127.0.0.1:47800)
 ./iniciar.sh --mcp      # compila o servidor e mostra como conectar ao Claude Code / Desktop / Gemini
 ./iniciar.sh --remoto   # servidor remoto simulado (PGlite), http://localhost:8787

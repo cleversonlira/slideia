@@ -62,7 +62,6 @@
 ├── docs/              # este plano, guia do usuário, material de submissão
 ├── e2e/               # testes Playwright ponta a ponta
 ├── skills/            # SKILL.md (Claude Code), AGENTS.md, GEMINI.md
-├── mcpb/              # manifest do pacote .mcpb (Claude Desktop)
 ├── Dockerfile, docker-compose.yml, fly.toml
 └── CLAUDE.md / AGENTS.md
 ```
@@ -321,7 +320,11 @@ Troca de layout: os elementos são remapeados para os slots do novo layout pelo 
 - SQLite em `~/Apresentacoes/.[nome]/data.sqlite` (WAL), assets em `~/Apresentacoes/.[nome]/assets/`, e `render` grava `~/Apresentacoes/<titulo>.html`. A pasta é configurável por `[NOME]_HOME`.
 - O processo stdio também abre um HTTP em `127.0.0.1`, tentando a porta 47800 e caindo para uma aleatória se estiver ocupada. A URL do editor leva um `?t=<token>` de uso único, trocado por cookie `HttpOnly` e removido da URL.
 - Vários processos ao mesmo tempo (várias sessões do Claude Code) são suportados: o SQLite em WAL aguenta múltiplos processos, e o SSE do editor faz polling barato de `version` (1 s) em vez de depender de eventos em memória.
-- `.mcpb`: manifest com `npx`/node empacotado, pedindo a pasta como configuração do usuário.
+- `.mcpb`: `pnpm mcpb` (`packages/server/scripts/build-mcpb.ts`) empacota o `dist/` local com um
+  lançador que confere `node:sqlite` (Node 22.13+), o manifest (tools geradas pelo próprio servidor,
+  pasta como `user_config` → `APRESENTA_HOME`) e o `sharp` de cada plataforma (macOS arm64/x64,
+  Windows x64/arm64, Linux x64; npm só aceita um `--os/--cpu` por instalação). O build falha se o
+  `stdio.js` importar pacote fora do bundle (por isso o S3 vive em `blobs-s3.ts`, só do remoto).
 
 ---
 
