@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import http from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -285,9 +285,9 @@ describe("chat widget (MCP Apps)", () => {
     const origin = new URL(rt.base()).origin;
     expect(info).toMatchObject({ name: "slideia", title: "SlideIA", websiteUrl: origin });
     expect(info.icons?.map((i) => i.src)).toContain(`${origin}/icon-512.png`);
-    const png = await fetch(`${origin}/icon-512.png`);
-    expect(png.status).toBe(200);
-    expect(png.headers.get("content-type")).toBe("image/png");
+    // Served from the editor build (packages/editor/public → dist), not built before unit tests.
+    for (const f of ["icon-512.png", "icon-192.png", "favicon.svg"])
+      expect(existsSync(join(import.meta.dirname, "../../editor/public", f)), f).toBe(true);
   });
 
   it("links the render tools to the ui:// view", async () => {
