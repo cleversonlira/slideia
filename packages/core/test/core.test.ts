@@ -278,6 +278,40 @@ describe("applyOps", () => {
 describe("diffToOps", () => {
   const strip = (p: Presentation) => stripUndefined({ ...p, version: 0 });
 
+  it("treats hidden:false like an absent hidden and produces valid slide patches", () => {
+    // Regression: editor autosave sent {hidden: null} and the server rejected the whole save.
+    const a = sample();
+    const s = a.slides[1]!;
+    const withFalse = {
+      ...a,
+      slides: a.slides.map((x) => (x === s ? { ...x, hidden: false } : x)),
+    };
+    const changed = {
+      ...a,
+      slides: a.slides.map((x) =>
+        x === s ? { ...x, transition: { type: "slide" as const, direction: "left" as const } } : x,
+      ),
+    };
+    const ops = diffToOps(withFalse, changed);
+    expect(ops).toEqual([
+      {
+        op: "update_slide",
+        slide: s.id,
+        patch: { transition: { type: "slide", direction: "left" } },
+      },
+    ]);
+    expect(() => applyOps(withFalse, ops)).not.toThrow();
+    // Un-hiding a hidden slide sends a boolean, and null is accepted too (removes the field).
+    const hidden = applyOps(a, [{ op: "update_slide", slide: s.id, patch: { hidden: true } }]);
+    expect(diffToOps(hidden.presentation, a)).toEqual([
+      { op: "update_slide", slide: s.id, patch: { hidden: false } },
+    ]);
+    const cleared = applyOps(hidden.presentation, [
+      { op: "update_slide", slide: s.id, patch: { hidden: null } },
+    ]);
+    expect(cleared.presentation.slides[1]!.hidden).toBeUndefined();
+  });
+
   it("reproduces arbitrary edits", () => {
     const a = sample();
     const b = applyOps(a, [

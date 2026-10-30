@@ -106,7 +106,7 @@ export const Operation = z.discriminatedUnion("op", [
           background: Background.nullable().optional(),
           transition: Transition.nullable().optional(),
           notes: RichTextInput.nullable().optional(),
-          hidden: z.boolean().optional(),
+          hidden: z.boolean().nullable().optional(),
         })
         .strict()
         .describe("null removes the field."),

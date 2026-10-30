@@ -64,9 +64,11 @@ function diffSlide(a: Slide, b: Slide): { removes: Operation[]; rest: Operation[
   const ops: Operation[] = [];
   const removes: Operation[] = [];
   const patch: Record<string, unknown> = {};
-  for (const key of ["variant", "background", "transition", "notes", "hidden"] as const) {
+  for (const key of ["variant", "background", "transition", "notes"] as const) {
     if (!deepEqual(a[key], b[key])) patch[key] = b[key] ?? null;
   }
+  // `hidden: false` and an absent `hidden` mean the same (visible): never send a no-op change.
+  if (Boolean(a.hidden) !== Boolean(b.hidden)) patch.hidden = Boolean(b.hidden);
   if (Object.keys(patch).length) ops.push({ op: "update_slide", slide: a.id, patch } as Operation);
 
   const bIds = new Set(b.elements.map((e) => e.id));
