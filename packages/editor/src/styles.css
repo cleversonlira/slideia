@@ -694,7 +694,8 @@ input[type="range"] {
   padding-left: 18px;
 }
 .image-preview {
-  background: repeating-conic-gradient(var(--ui-check) 0% 25%, var(--ui-panel) 0% 50%) 50% / 16px 16px;
+  background: repeating-conic-gradient(var(--ui-check) 0% 25%, var(--ui-panel) 0% 50%) 50% / 16px
+    16px;
   border-radius: 8px;
   overflow: hidden;
   height: 140px;

@@ -380,15 +380,13 @@ export function createRemoteApp(ctx: RemoteContext): Express {
         return;
       }
       if (!user.emailVerified) {
-        res
-          .type("html")
-          .send(
-            checkEmailPage(pc, {
-              email: user.email,
-              csrf: csrfToken(req, res),
-              next: req.originalUrl,
-            }),
-          );
+        res.type("html").send(
+          checkEmailPage(pc, {
+            email: user.email,
+            csrf: csrfToken(req, res),
+            next: req.originalUrl,
+          }),
+        );
         return;
       }
       if (await oauth.hasConsent(user.id, a.client.clientId, a.scope)) {
@@ -472,15 +470,13 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       res.redirect(302, next ?? "/");
       return;
     }
-    res
-      .type("html")
-      .send(
-        loginPage(pc, {
-          csrf: csrfToken(req, res),
-          ...(next ? { next } : {}),
-          google: !!config.google,
-        }),
-      );
+    res.type("html").send(
+      loginPage(pc, {
+        csrf: csrfToken(req, res),
+        ...(next ? { next } : {}),
+        google: !!config.google,
+      }),
+    );
   });
 
   app.post("/entrar", form, async (req: Req, res) => {
@@ -509,15 +505,13 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     const user = await accounts.authenticate(b.email ?? "", b.password ?? "");
     if (!user) return render("E-mail ou senha incorretos.");
     if (!user.emailVerified) {
-      res
-        .type("html")
-        .send(
-          checkEmailPage(pc, {
-            email: user.email,
-            csrf: csrfToken(req, res),
-            ...(next ? { next } : {}),
-          }),
-        );
+      res.type("html").send(
+        checkEmailPage(pc, {
+          email: user.email,
+          csrf: csrfToken(req, res),
+          ...(next ? { next } : {}),
+        }),
+      );
       return;
     }
     await startSession(res, user);
@@ -526,15 +520,13 @@ export function createRemoteApp(ctx: RemoteContext): Express {
 
   app.get("/cadastro", async (req: Req, res) => {
     const next = safeNext(req.query.next);
-    res
-      .type("html")
-      .send(
-        signupPage(pc, {
-          csrf: csrfToken(req, res),
-          ...(next ? { next } : {}),
-          google: !!config.google,
-        }),
-      );
+    res.type("html").send(
+      signupPage(pc, {
+        csrf: csrfToken(req, res),
+        ...(next ? { next } : {}),
+        google: !!config.google,
+      }),
+    );
   });
 
   app.post("/cadastro", form, async (req: Req, res) => {
@@ -560,16 +552,14 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       const user = await accounts.signup(b.email ?? "", b.password ?? "", b.name, next);
       log("signup", { user: anon(user.id) });
       const mail = ctx.mailer.outbox?.[0];
-      res
-        .type("html")
-        .send(
-          checkEmailPage(pc, {
-            email: user.email,
-            csrf: csrfToken(req, res),
-            devLink: devLink(/https?:\/\/\S+/.exec(mail?.text ?? "")?.[0] ?? ""),
-            ...(next ? { next } : {}),
-          }),
-        );
+      res.type("html").send(
+        checkEmailPage(pc, {
+          email: user.email,
+          csrf: csrfToken(req, res),
+          devLink: devLink(/https?:\/\/\S+/.exec(mail?.text ?? "")?.[0] ?? ""),
+          ...(next ? { next } : {}),
+        }),
+      );
     } catch (err) {
       if (err instanceof AccountError) return render(err.message);
       throw err;
@@ -583,16 +573,14 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     const user = await accounts.byEmail(b.email ?? "");
     let link: string | undefined;
     if (user && !user.emailVerified) link = await accounts.sendVerification(user, next);
-    res
-      .type("html")
-      .send(
-        checkEmailPage(pc, {
-          email: b.email ?? "",
-          csrf: csrfToken(req, res),
-          devLink: link ? devLink(link) : undefined,
-          ...(next ? { next } : {}),
-        }),
-      );
+    res.type("html").send(
+      checkEmailPage(pc, {
+        email: b.email ?? "",
+        csrf: csrfToken(req, res),
+        devLink: link ? devLink(link) : undefined,
+        ...(next ? { next } : {}),
+      }),
+    );
   });
 
   app.get("/verificar", async (req: Req, res) => {
@@ -614,14 +602,12 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     }
     await startSession(res, user);
     const next = safeNext(req.query.next);
-    res
-      .type("html")
-      .send(
-        messagePage(pc, "E-mail confirmado", "Sua conta está ativa.", {
-          href: next ?? "/",
-          label: next ? "Continuar" : "Minhas apresentações",
-        }),
-      );
+    res.type("html").send(
+      messagePage(pc, "E-mail confirmado", "Sua conta está ativa.", {
+        href: next ?? "/",
+        label: next ? "Continuar" : "Minhas apresentações",
+      }),
+    );
   });
 
   app.get("/esqueci-senha", (req, res) => {
@@ -632,15 +618,12 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     if (!csrfOk(req)) return tooMany(res);
     if (!limiter.hit(`forgot:${ip(req)}`, 5, 3600_000)) return tooMany(res);
     await accounts.requestPasswordReset(stringParams(req.body).email ?? "");
-    res
-      .type("html")
-      .send(
-        forgotPage(pc, {
-          csrf: csrfToken(req, res),
-          notice:
-            "Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha.",
-        }),
-      );
+    res.type("html").send(
+      forgotPage(pc, {
+        csrf: csrfToken(req, res),
+        notice: "Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha.",
+      }),
+    );
   });
 
   app.get("/redefinir-senha", (req, res) => {
@@ -949,13 +932,11 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     const access = token ? await oauth.verifyAccess(token) : null;
     if (!access) {
       res.setHeader("WWW-Authenticate", challenge(token ? "invalid_token" : undefined));
-      res
-        .status(401)
-        .json({
-          jsonrpc: "2.0",
-          error: { code: -32001, message: "Authentication required" },
-          id: null,
-        });
+      res.status(401).json({
+        jsonrpc: "2.0",
+        error: { code: -32001, message: "Authentication required" },
+        id: null,
+      });
       return;
     }
     if (!access.scopes.includes("presentations:read")) {
@@ -966,13 +947,11 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       return;
     }
     if (!limiter.hit(`mcp:${access.userId}`, 120, 60_000)) {
-      res
-        .status(429)
-        .json({
-          jsonrpc: "2.0",
-          error: { code: -32000, message: "Too many requests; slow down." },
-          id: null,
-        });
+      res.status(429).json({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: "Too many requests; slow down." },
+        id: null,
+      });
       return;
     }
     const server = createMcpServer(serviceFor(access.userId), ctx.previewer, {
@@ -1009,13 +988,11 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   });
   app.all("/mcp", (_req, res) => {
     res.setHeader("Allow", "POST, OPTIONS");
-    res
-      .status(405)
-      .json({
-        jsonrpc: "2.0",
-        error: { code: -32000, message: "Method not allowed (stateless server: use POST)." },
-        id: null,
-      });
+    res.status(405).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Method not allowed (stateless server: use POST)." },
+      id: null,
+    });
   });
 
   // ---------------------------------------------------------------------------
