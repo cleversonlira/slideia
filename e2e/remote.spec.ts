@@ -162,3 +162,15 @@ test("public pages: how to connect, privacy, terms and support", async ({ page }
   }
   await expect(page.locator("main")).toContainText(`${base}/mcp`);
 });
+
+test("sign-in page follows the dark theme (system or saved choice)", async ({ page }, info) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto(`${base}/entrar`);
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(await bg()).toBe("rgb(18, 21, 27)");
+  await page.screenshot({ path: info.outputPath("login-dark.png") });
+  // A light choice saved in the editor wins over the system theme.
+  await page.evaluate(() => localStorage.setItem("slideia-theme", "light"));
+  await page.reload();
+  expect(await bg()).toBe("rgb(244, 245, 247)");
+});
