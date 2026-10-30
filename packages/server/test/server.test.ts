@@ -78,6 +78,22 @@ describe("MCP tools", () => {
     expect(created.isError).toBeFalsy();
   });
 
+  it("creates a deck sent without meta (as Gemini did) using the first title", async () => {
+    const r = await call("create_presentation", {
+      presentation: {
+        slides: [
+          {
+            layout: "cover",
+            notes: "Welcome everyone.",
+            elements: [{ type: "title", text: "Solar energy distribution" }],
+          },
+        ],
+      },
+    });
+    expect(r.isError).toBeFalsy();
+    expect(r.content[0]!.text).toContain('Created "Solar energy distribution"');
+  });
+
   it("lists the tools with honest annotations", async () => {
     const { tools } = await client.listTools();
     const byName = Object.fromEntries(tools.map((t) => [t.name, t]));

@@ -130,6 +130,31 @@ describe("normalizePresentation", () => {
       }),
     ).toThrow(/Duplicate id "a"/);
   });
+
+  it("takes the title from the first title element when meta (or its title) is missing", () => {
+    const slides = [
+      {
+        layout: "section",
+        elements: [
+          { type: "text", slot: "subtitle", text: "sem título" },
+          { type: "title", text: "x" },
+        ],
+      },
+      { layout: "cover", elements: [{ type: "title", text: "Energia **solar** distribuída" }] },
+    ];
+    expect(normalizePresentation({ slides: slides.slice(1) }).meta.title).toBe(
+      "Energia solar distribuída",
+    );
+    expect(normalizePresentation({ meta: { theme: "tech" }, slides }).meta).toMatchObject({
+      title: "x",
+      theme: "tech",
+    });
+    expect(
+      normalizePresentation({
+        slides: [{ layout: "stats", elements: [{ type: "stat", value: "1", label: "a" }] }],
+      }).meta.title,
+    ).toBe("Apresentação");
+  });
 });
 
 describe("applyOps", () => {

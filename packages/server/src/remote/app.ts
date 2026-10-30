@@ -985,7 +985,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     }
     const server = createMcpServer(serviceFor(access.userId), ctx.previewer, {
       canWrite: access.scopes.includes("presentations:write"),
-      onToolCall: (name, ms, ok) => {
+      onToolCall: (name, ms, ok, error) => {
         metrics.tool(name, ms, ok);
         log("tool", {
           tool: name,
@@ -993,6 +993,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
           ok,
           user: anon(access.userId),
           client: access.clientId,
+          ...(error ? { error } : {}),
         });
       },
     });

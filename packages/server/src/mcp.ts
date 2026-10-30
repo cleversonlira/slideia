@@ -44,13 +44,15 @@ const SlideIn = z.looseObject({
 });
 
 const PresentationIn = z.object({
-  meta: z.looseObject({
-    title: z.string(),
-    theme: z.enum(THEME_IDS).optional(),
-    lang: z.string().optional().describe('BCP 47, default "pt-BR".'),
-    aspectRatio: z.enum(["16:9", "4:3"]).optional(),
-    defaultTransition: z.record(z.string(), z.unknown()).optional(),
-  }),
+  meta: z
+    .looseObject({
+      title: z.string().optional().describe("Default: text of the first title element."),
+      theme: z.enum(THEME_IDS).optional(),
+      lang: z.string().optional().describe('BCP 47, default "pt-BR".'),
+      aspectRatio: z.enum(["16:9", "4:3"]).optional(),
+      defaultTransition: z.record(z.string(), z.unknown()).optional(),
+    })
+    .optional(),
   slides: z.array(SlideIn).min(1),
 });
 
@@ -116,8 +118,21 @@ async function safely(fn: () => Promise<CallToolResult> | CallToolResult): Promi
 export interface McpOptions {
   /** False when the access token lacks the presentations:write scope. */
   canWrite?: boolean;
-  /** Called after every tool call (metrics, logs). Never receives content. */
-  onToolCall?: (name: string, ms: number, ok: boolean) => void;
+  /**
+   * Called after every tool call (metrics, logs). Never receives content: on failure, `error` is
+   * the start of the message with quoted values masked (field paths and how to fix remain).
+   */
+  onToolCall?: (name: string, ms: number, ok: boolean, error?: string) => void;
+}
+
+/** First line(s) of a tool error for logs, with anything quoted replaced by "…". */
+export function errorSummary(result: CallToolResult): string {
+  const first = result.content.find((c) => c.type === "text");
+  const text = first && "text" in first ? first.text : "";
+  return text
+    .replace(/"[^"\n]*"|'[^'\n]*'|“[^”\n]*”/g, '"…"')
+    .replace(/\s+/g, " ")
+    .slice(0, 300);
 }
 
 const WRITE_TOOLS = new Set(["create_presentation", "apply_edits", "add_image", "render"]);
@@ -155,7 +170,12 @@ export function createMcpServer(
         );
       }
       const result = (await cb(...args)) as CallToolResult;
-      opts.onToolCall?.(name, performance.now() - started, !result.isError);
+      opts.onToolCall?.(
+        name,
+        performance.now() - started,
+        !result.isError,
+        result.isError ? errorSummary(result) : undefined,
+      );
       return result;
     });
 
@@ -388,7 +408,8 @@ export function createMcpServer(
         "Generates the standalone .html file (works offline, with presenter-remote support) and returns where to get it.",
       inputSchema: { id: z.string() },
       annotations: {
-        readOnlyHint: false,
+        // Remote mode only returns signed links; locally it writes the .html file.
+        readOnlyHint: !service.writeFiles,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,

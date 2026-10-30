@@ -3,6 +3,7 @@ import { PresentationError, issuesFromZod, type Issue, type IssuePath } from "./
 import { IdAllocator } from "./ids.js";
 import { LAYOUTS, OVERFLOW_SLOT, findFreeSlot, getSlot } from "./layouts.js";
 import { toRichText } from "./markdown.js";
+import { plainText } from "./richtext.js";
 import {
   CURRENT_SCHEMA_VERSION,
   PresentationInputSchema,
@@ -173,9 +174,39 @@ export function normalizeSlide(
   });
 }
 
+/**
+ * Models often send the slides without `meta` (or without `meta.title`); every other meta field
+ * has a default, so the title is taken from the first title element instead of failing the call.
+ */
+function withDefaultTitle(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const data = input as { meta?: unknown; slides?: unknown };
+  const meta = data.meta === undefined ? {} : data.meta;
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return input;
+  if ((meta as { title?: unknown }).title !== undefined) return input;
+  let title = "";
+  for (const slide of Array.isArray(data.slides) ? data.slides : []) {
+    const elements = (slide as { elements?: unknown } | null)?.elements;
+    const el = (Array.isArray(elements) ? elements : []).find(
+      (e) => (e as { type?: unknown } | null)?.type === "title",
+    ) as { text?: unknown } | undefined;
+    if (typeof el?.text === "string" || (el?.text && typeof el.text === "object")) {
+      try {
+        title = plainText(toRichText(el.text as RichTextInput))
+          .replace(/\s+/g, " ")
+          .trim();
+      } catch {
+        title = "";
+      }
+      if (title) break;
+    }
+  }
+  return { ...data, meta: { ...meta, title: title.slice(0, 200) || "Apresentação" } };
+}
+
 /** Parses AI/import input into a normalized presentation. Throws PresentationError. */
 export function normalizePresentation(input: unknown, opts: { id?: string } = {}): Presentation {
-  const parsed = PresentationInputSchema.safeParse(input);
+  const parsed = PresentationInputSchema.safeParse(withDefaultTitle(input));
   if (!parsed.success) throw new PresentationError(issuesFromZod(parsed.error));
   const data = parsed.data;
   const issues: Issue[] = [];
