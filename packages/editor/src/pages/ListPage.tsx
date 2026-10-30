@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Presentation } from "@slideia/core/browser";
 import { ApiError, api, exportUrls, type PresentationSummary } from "../api.js";
+import { AccountMenu } from "../components/AccountMenu.js";
 import { Thumbnail } from "../components/Thumbnail.js";
 import { ensureSlideCss } from "../deck.js";
 import { navigate } from "../router.js";
@@ -81,6 +82,7 @@ export function ListPage() {
           <button type="button" className="btn primary" onClick={() => void create()}>
             + Nova apresentação
           </button>
+          <AccountMenu />
         </div>
       </header>
       {error && <p className="warn">{error}</p>}

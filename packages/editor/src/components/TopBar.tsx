@@ -3,6 +3,7 @@ import { navigate } from "../router.js";
 import { flush, resolveKeepMine, resolveReload } from "../sync.js";
 import { mutate, redo, toast, undo, useEditor, type SaveStatus } from "../state.js";
 import { IconButton, Menu, TextInput } from "../ui.js";
+import { AccountMenu } from "./AccountMenu.js";
 
 const STATUS: Record<SaveStatus, { label: string; cls: string }> = {
   loading: { label: "Carregando…", cls: "muted" },
@@ -128,6 +129,7 @@ export function TopBar() {
         >
           ▶ Apresentar
         </button>
+        <AccountMenu />
       </header>
       {status === "conflict" && (
         <div className="banner danger" role="alert">

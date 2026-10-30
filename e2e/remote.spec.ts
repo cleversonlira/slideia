@@ -120,3 +120,26 @@ test("OAuth consent screen authorizes an app and the account page lists it", asy
   await page.getByRole("button", { name: "Desconectar" }).click();
   await expect(page.getByText("Aplicativo desconectado.")).toBeVisible();
 });
+
+test("editor switches light/dark theme and signs out", async ({ page }) => {
+  await page.goto(base);
+  await page.getByLabel("E-mail").fill("joana@exemplo.com");
+  await page.getByLabel("Senha").fill("senha-forte-123");
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByRole("heading", { name: "Minhas apresentações" })).toBeVisible();
+
+  const html = page.locator("html");
+  await page.getByRole("button", { name: "Usar tema escuro" }).click();
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Usar tema claro" }).click();
+  await expect(html).toHaveAttribute("data-theme", "light");
+
+  await page.getByRole("button", { name: "Conta: joana@exemplo.com" }).click();
+  await page.getByRole("button", { name: "Sair" }).click();
+  await expect(page).toHaveURL(/\/entrar/);
+  expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(401);
+  await page.goto(base);
+  await expect(page).toHaveURL(/\/entrar/);
+});

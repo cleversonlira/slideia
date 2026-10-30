@@ -17,6 +17,8 @@ export interface EditorAuth {
   user(req: Request, res: Response): Promise<string | null> | string | null;
   /** What to do when an anonymous visitor opens an editor page (login redirect, message). */
   onAnonymousPage(req: Request, res: Response): void;
+  /** Signed-in account shown in the editor (remote mode). Absent in local mode, which has no login. */
+  account?(req: Request): Promise<{ email: string; name: string | null } | null>;
 }
 
 export interface EditorOptions {
@@ -129,6 +131,13 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
 
   const api = express.Router();
   const json = express.json({ limit: "20mb" });
+
+  api.get(
+    "/me",
+    withService(async (req, res) => {
+      res.json({ account: auth.account ? await auth.account(req) : null });
+    }),
+  );
 
   api.get(
     "/presentations",

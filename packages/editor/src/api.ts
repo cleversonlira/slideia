@@ -49,7 +49,13 @@ export interface VersionInfo {
   createdAt: string;
 }
 
+export interface Account {
+  email: string;
+  name: string | null;
+}
+
 export const api = {
+  me: () => req<{ account: Account | null }>("GET", "/api/me"),
   list: () => req<{ presentations: PresentationSummary[] }>("GET", "/api/presentations"),
   get: (id: string) => req<{ presentation: Presentation }>("GET", `/api/presentations/${id}`),
   create: (title?: string) =>

@@ -12,7 +12,7 @@ const CSS = `
 *{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:var(--bg)}
 main{max-width:440px;margin:0 auto;padding:48px 16px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:22px;color:var(--text);text-decoration:none}
-.brand span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;font-size:18px}
+.brand img{display:block;width:34px;height:34px}
 .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:26px 24px;box-shadow:0 6px 24px rgba(17,24,39,.06)}
 h1{font-size:22px;margin:0 0 6px}p{margin:8px 0}.muted{color:var(--muted);font-size:14px}
 form{display:flex;flex-direction:column;gap:14px;margin-top:16px}
@@ -47,8 +47,10 @@ export function page(
   opts: { wide?: boolean } = {},
 ): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="referrer" content="no-referrer"><title>${h(title)} · ${h(ctx.productName)}</title><style>${CSS}${opts.wide ? "main{max-width:720px}" : ""}</style></head>
-<body><main><a class="brand" href="/"><span>▶</span>${h(ctx.productName)}</a>${body}
+<meta name="referrer" content="no-referrer"><title>${h(title)} · ${h(ctx.productName)}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>${CSS}${opts.wide ? "main{max-width:720px}" : ""}</style></head>
+<body><main><a class="brand" href="/"><img src="/favicon.svg" alt="" width="34" height="34">${h(ctx.productName)}</a>${body}
 <footer><a href="/privacidade">Privacidade</a> · <a href="/termos">Termos</a> · <a href="/suporte">Suporte</a></footer></main></body></html>`;
 }
 

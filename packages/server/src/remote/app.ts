@@ -693,7 +693,9 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   });
 
   app.post("/sair", form, async (req, res) => {
-    if (csrfOk(req)) await accounts.endSession(readCookie(req, SESSION));
+    // Forms send the CSRF token; the editor (fetch) sends the same custom header as its API.
+    if (csrfOk(req) || req.headers["x-apresenta"] === "1")
+      await accounts.endSession(readCookie(req, SESSION));
     cookie(res, SESSION, "", 0);
     res.redirect(
       303,
@@ -1029,6 +1031,10 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       },
       onAnonymousPage(req, res) {
         res.redirect(302, `/entrar?next=${encodeURIComponent(req.originalUrl)}`);
+      },
+      async account(req) {
+        const user = await currentUser(req as Req);
+        return user ? { email: user.email, name: user.name } : null;
       },
     },
   });
