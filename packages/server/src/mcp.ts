@@ -163,8 +163,23 @@ export function createMcpServer(
   previewer: Previewer,
   opts: McpOptions = {},
 ): McpServer {
+  /** Base URL of this server (fonts, images and links the widget loads). */
+  const origin = new URL(service.links.editor("x")).origin;
+
   const server = new McpServer(
-    { name: "slideia", title: "SlideIA", version: VERSION },
+    {
+      name: "slideia",
+      title: "SlideIA",
+      version: VERSION,
+      description:
+        "Cria, edita e apresenta slides em HTML: a IA monta a apresentação e você ajusta no editor.",
+      websiteUrl: origin,
+      icons: [
+        { src: `${origin}/icon-512.png`, mimeType: "image/png", sizes: ["512x512"] },
+        { src: `${origin}/icon-192.png`, mimeType: "image/png", sizes: ["192x192"] },
+        { src: `${origin}/favicon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+      ],
+    },
     {
       instructions:
         "SlideIA creates, edits and presents HTML slide decks. Whenever the user asks for a presentation, slides, a deck or a talk, " +
@@ -174,9 +189,6 @@ export function createMcpServer(
         "Edits are partial (apply_edits); the user can also edit by hand in the web editor, so read the latest version before editing.",
     },
   );
-
-  /** Base URL of this server (fonts, images and links the widget loads). */
-  const origin = new URL(service.links.editor("x")).origin;
 
   /** Data for the chat widget: images as signed URLs (or inlined locally), fonts and icons. */
   const viewPayload = async (p: Presentation): Promise<Record<string, unknown>> => {

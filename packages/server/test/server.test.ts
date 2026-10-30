@@ -280,6 +280,16 @@ describe("SSRF protection", () => {
 describe("chat widget (MCP Apps)", () => {
   type Meta = Record<string, unknown>;
 
+  it("announces name, website and icons in serverInfo", async () => {
+    const info = client.getServerVersion()!;
+    const origin = new URL(rt.base()).origin;
+    expect(info).toMatchObject({ name: "slideia", title: "SlideIA", websiteUrl: origin });
+    expect(info.icons?.map((i) => i.src)).toContain(`${origin}/icon-512.png`);
+    const png = await fetch(`${origin}/icon-512.png`);
+    expect(png.status).toBe(200);
+    expect(png.headers.get("content-type")).toBe("image/png");
+  });
+
   it("links the render tools to the ui:// view", async () => {
     const { tools } = await client.listTools();
     const withView = tools
