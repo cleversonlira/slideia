@@ -54,7 +54,7 @@ function SortableSlide({
       }}
     >
       <span className="slide-num">{index + 1}</span>
-      <Thumbnail slide={slide} pres={pres} width={176} />
+      <Thumbnail slide={slide} pres={pres} width="fill" />
       <div className="slide-actions" onPointerDown={(e) => e.stopPropagation()}>
         <IconButton
           icon="copy"
