@@ -131,6 +131,48 @@ describe("normalizePresentation", () => {
     ).toThrow(/Duplicate id "a"/);
   });
 
+  it("lifts fields nested under the element type (Gemini's shape)", () => {
+    const p = normalizePresentation({
+      meta: { title: "x" },
+      slides: [
+        {
+          layout: "chart",
+          elements: [
+            { type: "title", text: "Carga" },
+            {
+              type: "chart",
+              chart: { kind: "line", labels: ["a", "b"], series: [{ name: "s", values: [1, 2] }] },
+            },
+          ],
+        },
+        {
+          layout: "timeline",
+          elements: [
+            {
+              type: "timeline",
+              timeline: { items: [1, 2, 3].map((n) => ({ date: `${n}`, title: `t${n}` })) },
+            },
+          ],
+        },
+        {
+          layout: "title-content",
+          elements: [
+            { type: "title", text: "T" },
+            // A text element's own "text" field (RichText object) must stay as it is.
+            { type: "text", text: { paragraphs: [{ runs: [{ text: "olá" }] }] } },
+          ],
+        },
+      ],
+    });
+    expect(p.slides[0]!.elements[1]).toMatchObject({
+      type: "chart",
+      kind: "line",
+      labels: ["a", "b"],
+    });
+    expect(p.slides[1]!.elements[0]).toMatchObject({ type: "timeline" });
+    expect(p.slides[2]!.elements[1]).toMatchObject({ type: "text" });
+  });
+
   it("takes the title from the first title element when meta (or its title) is missing", () => {
     const slides = [
       {

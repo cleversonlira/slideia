@@ -174,6 +174,35 @@ export function normalizeSlide(
   });
 }
 
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === "object" && !Array.isArray(v);
+
+/**
+ * Models (Gemini) often nest an element's fields under a key named after its type:
+ * {"type":"chart","chart":{"kind":"line",…}}. That shape is unambiguous, so the inner fields are
+ * lifted into the element (fields already on the element win).
+ */
+function liftNestedElementFields(input: unknown): unknown {
+  if (!isPlainObject(input) || !Array.isArray(input.slides)) return input;
+  return {
+    ...input,
+    slides: input.slides.map((slide: unknown) => {
+      if (!isPlainObject(slide) || !Array.isArray(slide.elements)) return slide;
+      return {
+        ...slide,
+        elements: slide.elements.map((el: unknown) => {
+          // "text" elements have a real field named "text" (which may be a RichText object).
+          if (!isPlainObject(el) || typeof el.type !== "string" || el.type === "text") return el;
+          const inner = el[el.type];
+          if (!isPlainObject(inner)) return el;
+          const { [el.type]: _nested, ...rest } = el;
+          return { ...inner, ...rest };
+        }),
+      };
+    }),
+  };
+}
+
 /**
  * Models often send the slides without `meta` (or without `meta.title`); every other meta field
  * has a default, so the title is taken from the first title element instead of failing the call.
@@ -206,7 +235,9 @@ function withDefaultTitle(input: unknown): unknown {
 
 /** Parses AI/import input into a normalized presentation. Throws PresentationError. */
 export function normalizePresentation(input: unknown, opts: { id?: string } = {}): Presentation {
-  const parsed = PresentationInputSchema.safeParse(withDefaultTitle(input));
+  const parsed = PresentationInputSchema.safeParse(
+    withDefaultTitle(liftNestedElementFields(input)),
+  );
   if (!parsed.success) throw new PresentationError(issuesFromZod(parsed.error));
   const data = parsed.data;
   const issues: Issue[] = [];
