@@ -128,10 +128,13 @@ export function createMcpServer(
   opts: McpOptions = {},
 ): McpServer {
   const server = new McpServer(
-    { name: "apresenta", title: "Apresentações HTML", version: VERSION },
+    { name: "slideia", title: "SlideIA", version: VERSION },
     {
       instructions:
-        "Creates and edits HTML slide presentations stored by this server. Read get_guide before creating a presentation. " +
+        "SlideIA creates, edits and presents HTML slide decks. Whenever the user asks for a presentation, slides, a deck or a talk, " +
+        "build it with these tools instead of writing the slides as text in the chat: call get_guide, then create_presentation with the whole deck, " +
+        "check it with preview, and give the user the editor and download links from the result. " +
+        "If the request is very vague you may confirm topic and length in one short question, but do not answer with a text-only outline. " +
         "Edits are partial (apply_edits); the user can also edit by hand in the web editor, so read the latest version before editing.",
     },
   );

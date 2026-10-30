@@ -41,7 +41,7 @@ export function buildGuide(): string {
   return `# Presentation guide
 
 ## Workflow
-1. Agree on a short outline with the user first (titles + one line per slide) unless they asked you to go ahead.
+1. If the user asked you to go ahead, create the deck right away. Otherwise propose a short outline (titles + one line per slide) and, once approved, create it with these tools — never leave the presentation as text in the chat.
 2. Call create_presentation once with the whole deck (8–15 slides is typical). Do not send HTML.
 3. Call preview to check the result visually and fix problems with apply_edits (batch all edits in ONE call).
 4. Give the user the editor link (they can edit texts by hand) and the download link.
