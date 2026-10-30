@@ -261,7 +261,8 @@ describe("SSRF protection", () => {
     // IP literals skip DNS; a hostname goes through the pinned lookup, which Node calls with
     // { all: true } (autoSelectFamily). Regression: that path failed for every real host.
     const srv = http.createServer((_req, res) => res.end("ok"));
-    await new Promise<void>((r) => srv.listen(0, "127.0.0.1", () => r()));
+    // "localhost" may resolve to ::1 first (GitHub runners) or to 127.0.0.1: listen on both.
+    await new Promise<void>((r) => srv.listen(0, "::", () => r()));
     try {
       const port = (srv.address() as { port: number }).port;
       const r = await fetchPublic(`http://localhost:${port}/doc`, {
