@@ -1,4 +1,4 @@
-import { applyOps, diffToOps, type Presentation } from "@apresenta/core";
+import { applyOps, diffToOps, type Presentation } from "@slideia/core";
 import { ApiError, api } from "./api.js";
 import {
   fixSelection,

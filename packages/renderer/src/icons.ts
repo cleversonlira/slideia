@@ -1,4 +1,4 @@
-import type { Presentation } from "@apresenta/core/browser";
+import type { Presentation } from "@slideia/core/browser";
 
 /** Icon name (kebab-case) → inner SVG markup (24×24 Lucide grid). */
 export type IconMap = Record<string, string>;

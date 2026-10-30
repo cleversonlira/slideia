@@ -93,7 +93,7 @@ build_server() {
   # Recompila quando o bundle não existe ou algum fonte é mais novo.
   if [[ ! -f "$SERVER" ]] || [[ -n "$(find packages/*/src packages/editor/index.html assets/examples -newer "$SERVER" -type f -print -quit 2>/dev/null)" ]]; then
     step "Compilando o servidor e o editor"
-    pnpm -s --filter @apresenta/server build
+    pnpm -s --filter @slideia/server build
   fi
 }
 

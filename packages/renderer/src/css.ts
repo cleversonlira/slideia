@@ -1,4 +1,4 @@
-import type { Presentation, Theme } from "@apresenta/core/browser";
+import type { Presentation, Theme } from "@slideia/core/browser";
 import { fontStack } from "./fonts.js";
 import { canvasSize } from "./render.js";
 

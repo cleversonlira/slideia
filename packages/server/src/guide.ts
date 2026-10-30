@@ -1,4 +1,4 @@
-import { LAYOUTS, THEMES, TRANSITION_TYPES } from "@apresenta/core";
+import { LAYOUTS, THEMES, TRANSITION_TYPES } from "@slideia/core";
 
 /** Design rules shared by get_guide, the MCP prompt and the design-guide resource. */
 export const DESIGN_RULES = `## Design rules

@@ -17,9 +17,9 @@ const dist = `${root}dist/`;
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(`${dist}fonts`, { recursive: true });
 
-execSync("pnpm --filter @apresenta/renderer build", { stdio: "inherit", cwd: repo });
+execSync("pnpm --filter @slideia/renderer build", { stdio: "inherit", cwd: repo });
 if (!process.argv.includes("--skip-editor"))
-  execSync("pnpm --filter @apresenta/editor build", { stdio: "inherit", cwd: repo });
+  execSync("pnpm --filter @slideia/editor build", { stdio: "inherit", cwd: repo });
 
 // Native, WASM or very large packages stay external; dist/package.json lists them.
 const EXTERNAL = ["sharp", "playwright-core", "@electric-sql/pglite", "pg", "@aws-sdk/client-s3"];

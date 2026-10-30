@@ -12,7 +12,7 @@ COPY packages/editor/package.json packages/editor/
 COPY packages/server/package.json packages/server/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm --filter @apresenta/server build
+RUN pnpm --filter @slideia/server build
 
 FROM node:24-bookworm-slim
 ENV NODE_ENV=production \

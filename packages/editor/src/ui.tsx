@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { COLOR_TOKENS, isHex, resolveTheme, type Presentation } from "@apresenta/core/browser";
+import { COLOR_TOKENS, isHex, resolveTheme, type Presentation } from "@slideia/core/browser";
 import { COLOR_LABELS } from "./defaults.js";
 import { allIcons } from "./deck.js";
 

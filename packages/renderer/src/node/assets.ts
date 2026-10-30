@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { dirname, extname, join } from "node:path";
-import type { FontId } from "@apresenta/core";
+import type { FontId } from "@slideia/core";
 import { icons as lucide } from "lucide";
 import { FONTS } from "../fonts.js";
 import type { IconMap } from "../icons.js";

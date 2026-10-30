@@ -1,7 +1,7 @@
 # AGENTS.md — convenções do projeto
 
 Ferramenta de criação, edição e apresentação de slides em HTML, operada por IA via MCP
-(nome definitivo a decidir; codinome e escopo npm `@apresenta/*`). Arquitetura completa e
+(**SlideIA**, https://slideia.site; escopo npm `@slideia/*`). Arquitetura completa e
 decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-apresentacoes.md`.
 
 ## Estado
@@ -19,7 +19,7 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
 
 - `packages/core` — Presentation Schema (Zod), Markdown estendido ⇄ texto rico, layouts/slots,
   temas, normalização da entrada da IA, operações (`applyOps`), `diffToOps`, regras de design.
-  - `@apresenta/core` exporta tudo; `@apresenta/core/browser` é a entrada **sem Zod** para bundles
+  - `@slideia/core` exporta tudo; `@slideia/core/browser` é a entrada **sem Zod** para bundles
     de navegador (player, canvas do editor). Constantes ficam em `constants.ts` (sem Zod) por isso.
 - `packages/renderer` — `Presentation → HTML` (funções puras, sem framework), CSS de temas e
   layouts, autofit, parser DOM → texto rico, player standalone (`src/player`), export autocontido

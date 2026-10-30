@@ -5,7 +5,7 @@ import {
   type Paragraph,
   type RichText,
   type Run,
-} from "@apresenta/core/browser";
+} from "@slideia/core/browser";
 
 /* RichText (storage format) ⇄ TipTap/ProseMirror JSON. */
 

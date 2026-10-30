@@ -1,8 +1,8 @@
 import { Editor } from "@tiptap/core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { richTextEquals, type Element, type Slide } from "@apresenta/core/browser";
-import { autofit, runTransition } from "@apresenta/renderer";
+import { richTextEquals, type Element, type Slide } from "@slideia/core/browser";
+import { autofit, runTransition } from "@slideia/renderer";
 import { api } from "../api.js";
 import { canvasSize, deckStyle, slideHtml, styleObject } from "../deck.js";
 import { fieldOp, getField } from "../fields.js";

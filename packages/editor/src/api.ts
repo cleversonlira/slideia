@@ -1,4 +1,4 @@
-import type { DesignWarning, Presentation } from "@apresenta/core";
+import type { DesignWarning, Presentation } from "@slideia/core";
 
 export class ApiError extends Error {
   constructor(

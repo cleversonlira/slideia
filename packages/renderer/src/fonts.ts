@@ -1,4 +1,4 @@
-import type { FontId } from "@apresenta/core/browser";
+import type { FontId } from "@slideia/core/browser";
 
 export interface FontDef {
   family: string;

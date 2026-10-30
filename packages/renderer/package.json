@@ -1,5 +1,5 @@
 {
-  "name": "@apresenta/renderer",
+  "name": "@slideia/renderer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "examples": "tsx scripts/build-player.ts && tsx scripts/build-examples.ts"
   },
   "dependencies": {
-    "@apresenta/core": "workspace:*",
+    "@slideia/core": "workspace:*",
     "@fontsource/dm-sans": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
     "@fontsource/inter": "^5.3.0",

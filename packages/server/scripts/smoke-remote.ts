@@ -1,6 +1,6 @@
 /*
  * Smoke test of a running remote server (e.g. `docker compose up`), as a real client would use it:
- *   pnpm --filter @apresenta/server exec tsx scripts/smoke-remote.ts [http://localhost:8787] [mailpit-url]
+ *   pnpm --filter @slideia/server exec tsx scripts/smoke-remote.ts [http://localhost:8787] [mailpit-url]
  * Signs up (verification e-mail read from Mailpit), connects with the MCP SDK OAuth client,
  * creates a presentation with an image, previews it, downloads the HTML via the signed link.
  */

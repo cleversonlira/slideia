@@ -36,7 +36,7 @@ Teste de fumaça contra um servidor rodando (cadastro com e-mail do Mailpit, OAu
 oficial do SDK, criação com imagem, preview, download assinado):
 
 ```bash
-pnpm --filter @apresenta/server exec tsx scripts/smoke-remote.ts http://localhost:8787 http://localhost:8025
+pnpm --filter @slideia/server exec tsx scripts/smoke-remote.ts http://localhost:8787 http://localhost:8025
 ```
 
 ### MCP Inspector

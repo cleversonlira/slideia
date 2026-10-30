@@ -1,4 +1,4 @@
-import type { Transition } from "@apresenta/core/browser";
+import type { Transition } from "@slideia/core/browser";
 
 type Dir = "left" | "right" | "up" | "down";
 

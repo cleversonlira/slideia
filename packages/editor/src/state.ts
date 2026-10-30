@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { applyOps, PresentationError, type Operation, type Presentation } from "@apresenta/core";
+import { applyOps, PresentationError, type Operation, type Presentation } from "@slideia/core";
 
 export type SaveStatus =
   "loading" | "saved" | "dirty" | "saving" | "offline" | "conflict" | "error";

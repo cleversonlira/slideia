@@ -1,5 +1,5 @@
 import { icons as lucide } from "lucide";
-import { resolveTheme, type Presentation, type Slide } from "@apresenta/core/browser";
+import { resolveTheme, type Presentation, type Slide } from "@slideia/core/browser";
 import {
   SLIDE_CSS,
   createContext,
@@ -7,7 +7,7 @@ import {
   themeVars,
   type IconMap,
   type RenderContext,
-} from "@apresenta/renderer";
+} from "@slideia/renderer";
 import { resolveAsset } from "./api.js";
 
 /* Same fonts the exported HTML embeds (FONTS in the renderer). */

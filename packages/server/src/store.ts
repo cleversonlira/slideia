@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { randomId, type Presentation } from "@apresenta/core";
+import { randomId, type Presentation } from "@slideia/core";
 import { DiskBlobStore, MIME_EXT, type BlobStore } from "./blobs.js";
 import {
   KEEP_VERSIONS,

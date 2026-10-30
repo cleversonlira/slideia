@@ -1,4 +1,4 @@
-import type { ElementOf } from "@apresenta/core/browser";
+import type { ElementOf } from "@slideia/core/browser";
 import { esc } from "./escape.js";
 import { cssColor } from "./richtext-html.js";
 

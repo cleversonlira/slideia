@@ -1,6 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { Presentation } from "@apresenta/core/browser";
+import type { Presentation } from "@slideia/core/browser";
 import { ColorPicker, Icon, IconButton } from "../ui.js";
 
 type Pop = null | "color" | "highlight" | "link" | "size" | "align";

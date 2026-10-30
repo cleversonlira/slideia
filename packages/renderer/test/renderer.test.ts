@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { normalizePresentation, type Presentation } from "@apresenta/core";
+import { normalizePresentation, type Presentation } from "@slideia/core";
 import {
   computeSteps,
   createContext,

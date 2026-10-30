@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { resolveTheme, type Presentation } from "@apresenta/core";
+import { resolveTheme, type Presentation } from "@slideia/core";
 import { deckCss } from "../css.js";
 import { esc } from "../escape.js";
 import { collectIconNames } from "../icons.js";
@@ -41,7 +41,7 @@ export async function loadPlayerJs(): Promise<string> {
       // try next location
     }
   }
-  throw new Error(`Player bundle not found. Run "pnpm --filter @apresenta/renderer build".`);
+  throw new Error(`Player bundle not found. Run "pnpm --filter @slideia/renderer build".`);
 }
 
 /** A 1×1 transparent GIF used when an image cannot be embedded. */

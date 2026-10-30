@@ -6,7 +6,7 @@ import {
   type Paragraph,
   type RichText,
   type Run,
-} from "@apresenta/core/browser";
+} from "@slideia/core/browser";
 
 /*
  * DOM → RichText. Accepts the renderer's own markup and the messier HTML produced by

@@ -1,4 +1,4 @@
-import type { Presentation } from "@apresenta/core/browser";
+import type { Presentation } from "@slideia/core/browser";
 import type { IconMap } from "../icons.js";
 import { Player } from "./app.js";
 import { bootPresenter } from "./presenter.js";

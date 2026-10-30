@@ -1,5 +1,5 @@
 {
-  "name": "apresenta",
+  "name": "slideia",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.14.0",
@@ -17,8 +17,8 @@
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "render": "pnpm --filter @apresenta/renderer run render",
-    "examples": "pnpm --filter @apresenta/renderer run examples"
+    "render": "pnpm --filter @slideia/renderer run render",
+    "examples": "pnpm --filter @slideia/renderer run examples"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

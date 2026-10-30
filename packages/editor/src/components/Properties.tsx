@@ -10,8 +10,8 @@ import {
   type Presentation,
   type Slide,
   type Transition,
-} from "@apresenta/core/browser";
-import { FONTS } from "@apresenta/renderer";
+} from "@slideia/core/browser";
+import { FONTS } from "@slideia/renderer";
 import { useMemo } from "react";
 import { resolveAsset } from "../api.js";
 import {

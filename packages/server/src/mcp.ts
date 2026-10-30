@@ -11,7 +11,7 @@ import {
   TRANSITION_TYPES,
   formatIssues,
   type DesignWarning,
-} from "@apresenta/core";
+} from "@slideia/core";
 import { DESIGN_RULES, buildGuide } from "./guide.js";
 import { PreviewUnavailableError, type Previewer } from "./preview.js";
 import { ConflictError, LimitError, NotFoundError, type PresentationService } from "./service.js";

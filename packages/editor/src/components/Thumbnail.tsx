@@ -1,6 +1,6 @@
 import { memo, useLayoutEffect, useRef } from "react";
-import type { Presentation, Slide } from "@apresenta/core/browser";
-import { autofit } from "@apresenta/renderer";
+import type { Presentation, Slide } from "@slideia/core/browser";
+import { autofit } from "@slideia/renderer";
 import { canvasSize, deckStyle, slideHtml, styleObject } from "../deck.js";
 
 /** A slide rendered by the renderer and scaled down to `width` px. */

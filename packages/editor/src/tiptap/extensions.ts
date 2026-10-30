@@ -2,8 +2,8 @@ import { Extension, Mark, type AnyExtension } from "@tiptap/core";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import StarterKit from "@tiptap/starter-kit";
-import { COLOR_TOKENS, PARAGRAPH_SIZES } from "@apresenta/core/browser";
-import { cssColor } from "@apresenta/renderer";
+import { COLOR_TOKENS, PARAGRAPH_SIZES } from "@slideia/core/browser";
+import { cssColor } from "@slideia/renderer";
 
 /*
  * TipTap restricted to the rich text schema, rendering the same markup as the renderer

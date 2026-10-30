@@ -1,5 +1,5 @@
-import type { Operation } from "@apresenta/core";
-import { mainTextField, type Element, type RichText } from "@apresenta/core/browser";
+import type { Operation } from "@slideia/core";
+import { mainTextField, type Element, type RichText } from "@slideia/core/browser";
 
 type Path = Array<string | number>;
 

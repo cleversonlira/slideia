@@ -4,7 +4,7 @@ import {
   type Marks,
   type Paragraph,
   type RichText,
-} from "@apresenta/core/browser";
+} from "@slideia/core/browser";
 import { esc, safeHref } from "./escape.js";
 
 /** CSS value for a color reference: theme tokens become custom properties. */

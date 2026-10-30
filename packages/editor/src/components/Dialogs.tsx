@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { applyOps, type Presentation } from "@apresenta/core";
+import { applyOps, type Presentation } from "@slideia/core";
 import { api, type VersionInfo } from "../api.js";
 import { flush } from "../sync.js";
 import { loadPresentation, mutate, toast, useEditor } from "../state.js";

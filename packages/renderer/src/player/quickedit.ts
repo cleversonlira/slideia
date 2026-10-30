@@ -1,4 +1,4 @@
-import type { Element, RichText, Slide } from "@apresenta/core/browser";
+import type { Element, RichText, Slide } from "@slideia/core/browser";
 import { domToRichText } from "../dom-parse.js";
 import type { Player } from "./app.js";
 import type { Action } from "./keys.js";

@@ -5,7 +5,7 @@ import {
   normalizePresentation,
   type LayoutId,
   type Presentation,
-} from "@apresenta/core";
+} from "@slideia/core";
 import { defaultSlide } from "../defaults.js";
 import { currentSlide, mutate, selectSlide, useEditor } from "../state.js";
 import { Modal } from "../ui.js";

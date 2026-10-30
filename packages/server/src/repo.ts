@@ -1,4 +1,4 @@
-import type { Presentation } from "@apresenta/core";
+import type { Presentation } from "@slideia/core";
 
 export type Author = "user" | "ai";
 export type Channel = "editor" | "mcp" | "import";

@@ -1,6 +1,6 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { checkDesign, normalizePresentation } from "@apresenta/core";
+import { checkDesign, normalizePresentation } from "@slideia/core";
 import { directoryAssetLoader } from "../src/node/assets.js";
 import { buildStandaloneHtml } from "../src/node/export.js";
 

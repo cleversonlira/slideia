@@ -1,5 +1,5 @@
 {
-  "name": "@apresenta/server",
+  "name": "@slideia/server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,8 @@
     "dev": "tsx src/stdio.ts"
   },
   "dependencies": {
-    "@apresenta/core": "workspace:*",
-    "@apresenta/renderer": "workspace:*",
+    "@slideia/core": "workspace:*",
+    "@slideia/renderer": "workspace:*",
     "@aws-sdk/client-s3": "^3.1152.0",
     "@electric-sql/pglite": "^0.5.10",
     "@modelcontextprotocol/sdk": "^1.32.1",

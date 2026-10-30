@@ -6,7 +6,7 @@ import {
   type Element,
   type ElementOf,
   type Slide,
-} from "@apresenta/core/browser";
+} from "@slideia/core/browser";
 import { resolveAsset } from "../api.js";
 import { ANIMATION_LABELS, ELEMENT_LABELS, SLOT_LABELS } from "../defaults.js";
 import { mutate, selectElement, useEditor } from "../state.js";

@@ -1,6 +1,6 @@
 import { EditorContent, useEditor as useTiptap } from "@tiptap/react";
 import { useEffect, useRef } from "react";
-import { richTextEquals, type RichText } from "@apresenta/core/browser";
+import { richTextEquals, type RichText } from "@slideia/core/browser";
 import { docToRichText, richTextToDoc } from "../tiptap/convert.js";
 import { editorExtensions } from "../tiptap/extensions.js";
 

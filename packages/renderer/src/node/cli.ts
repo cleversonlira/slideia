@@ -2,7 +2,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { PresentationError, checkDesign, loadPresentation } from "@apresenta/core";
+import { PresentationError, checkDesign, loadPresentation } from "@slideia/core";
 import { directoryAssetLoader } from "./assets.js";
 import { buildStandaloneHtml, extractPresentationJson } from "./export.js";
 

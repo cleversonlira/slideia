@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
-import { PresentationError, formatIssues } from "@apresenta/core";
+import { PresentationError, formatIssues } from "@slideia/core";
 import { ImageError } from "./images.js";
 import {
   ConflictError,
@@ -354,7 +354,7 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
         res
           .status(503)
           .type("text")
-          .send("O editor ainda não foi compilado: rode `pnpm --filter @apresenta/editor build`.");
+          .send("O editor ainda não foi compilado: rode `pnpm --filter @slideia/editor build`.");
         return;
       }
       res.setHeader("Cache-Control", "no-store");

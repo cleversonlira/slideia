@@ -1,4 +1,4 @@
-import { randomId } from "@apresenta/core";
+import { randomId } from "@slideia/core";
 import type { BlobStore } from "../blobs.js";
 import type { RemoteConfig } from "./config.js";
 import { hashPassword, randomToken, sha256, verifyPassword } from "./crypto.js";

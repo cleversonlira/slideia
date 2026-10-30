@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { randomId, type Presentation } from "@apresenta/core";
+import { randomId, type Presentation } from "@slideia/core";
 import type { BlobStore } from "../blobs.js";
 import {
   KEEP_VERSIONS,

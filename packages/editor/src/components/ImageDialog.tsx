@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
-import type { ElementOf } from "@apresenta/core/browser";
+import type { ElementOf } from "@slideia/core/browser";
 import { api, resolveAsset } from "../api.js";
 import { PLACEHOLDER_IMAGE } from "../defaults.js";
 import { currentSlide, mutate, selectElement, toast, useEditor } from "../state.js";

@@ -1,4 +1,4 @@
-import { LAYOUTS, type Element } from "@apresenta/core/browser";
+import { LAYOUTS, type Element } from "@slideia/core/browser";
 import { ELEMENT_LABELS, SLOT_LABELS } from "../defaults.js";
 import { fieldOp, getField } from "../fields.js";
 import { mutate, selectSlide, useEditor } from "../state.js";

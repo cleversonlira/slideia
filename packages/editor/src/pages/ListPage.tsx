@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Presentation } from "@apresenta/core/browser";
+import type { Presentation } from "@slideia/core/browser";
 import { ApiError, api, exportUrls, type PresentationSummary } from "../api.js";
 import { Thumbnail } from "../components/Thumbnail.js";
 import { ensureSlideCss } from "../deck.js";

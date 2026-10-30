@@ -1,4 +1,4 @@
-import type { Presentation, Slide, Transition } from "@apresenta/core/browser";
+import type { Presentation, Slide, Transition } from "@slideia/core/browser";
 import { autofit } from "../fit.js";
 import type { IconMap } from "../icons.js";
 import { canvasSize, createContext, renderSlide, type RenderContext } from "../render.js";

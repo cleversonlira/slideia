@@ -1,4 +1,4 @@
-import type { ElementType, LayoutId, TRANSITION_TYPES } from "@apresenta/core/browser";
+import type { ElementType, LayoutId, TRANSITION_TYPES } from "@slideia/core/browser";
 
 /** Neutral gray image used until the user picks one (stored as an asset by the server). */
 export const PLACEHOLDER_IMAGE =

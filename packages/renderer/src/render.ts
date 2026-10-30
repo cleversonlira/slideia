@@ -10,7 +10,7 @@ import {
   type Presentation,
   type Slide,
   type Theme,
-} from "@apresenta/core/browser";
+} from "@slideia/core/browser";
 import { chartSvg } from "./chart.js";
 import { esc, safeImageSrc } from "./escape.js";
 import { TREND_ICONS, iconSvg, type IconMap } from "./icons.js";

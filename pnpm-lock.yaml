@@ -211,12 +211,6 @@ importers:
 
   packages/editor:
     dependencies:
-      '@apresenta/core':
-        specifier: workspace:*
-        version: link:../core
-      '@apresenta/renderer':
-        specifier: workspace:*
-        version: link:../renderer
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -256,6 +250,12 @@ importers:
       '@fontsource/space-grotesk':
         specifier: ^5.3.0
         version: 5.3.0
+      '@slideia/core':
+        specifier: workspace:*
+        version: link:../core
+      '@slideia/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       '@tiptap/core':
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/pm@3.32.0)
@@ -305,9 +305,6 @@ importers:
 
   packages/renderer:
     dependencies:
-      '@apresenta/core':
-        specifier: workspace:*
-        version: link:../core
       '@fontsource/dm-sans':
         specifier: ^5.3.0
         version: 5.3.0
@@ -338,6 +335,9 @@ importers:
       '@fontsource/space-grotesk':
         specifier: ^5.3.0
         version: 5.3.0
+      '@slideia/core':
+        specifier: workspace:*
+        version: link:../core
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -347,12 +347,6 @@ importers:
 
   packages/server:
     dependencies:
-      '@apresenta/core':
-        specifier: workspace:*
-        version: link:../core
-      '@apresenta/renderer':
-        specifier: workspace:*
-        version: link:../renderer
       '@aws-sdk/client-s3':
         specifier: ^3.1152.0
         version: 3.1152.0
@@ -362,6 +356,12 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(zod@4.6.7)
+      '@slideia/core':
+        specifier: workspace:*
+        version: link:../core
+      '@slideia/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       express:
         specifier: ^5.3.0
         version: 5.3.0

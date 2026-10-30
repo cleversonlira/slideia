@@ -525,8 +525,8 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
 
 ## 17. O que mudou na implementação (Fase 1)
 
-- **Escopo npm provisório `@apresenta/*`** até a definição do nome.
-- **`@apresenta/core/browser`**: entrada sem Zod para bundles de navegador; as constantes do schema
+- **Escopo npm provisório `@slideia/*`** até a definição do nome.
+- **`@slideia/core/browser`**: entrada sem Zod para bundles de navegador; as constantes do schema
   foram para `constants.ts`. O player embutido no HTML tem ~58 KB (20 KB gzip).
 - **Operações**: além das previstas, `reorder_elements`, `duplicate_slide`, `move_slide` e
   `replace_slide` (tabela do §4 atualizada). `slide` aceita id ou número (base 1).

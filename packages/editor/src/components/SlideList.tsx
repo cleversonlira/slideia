@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Presentation, Slide } from "@apresenta/core/browser";
+import type { Presentation, Slide } from "@slideia/core/browser";
 import { mutate, selectSlide, useEditor } from "../state.js";
 import { IconButton } from "../ui.js";
 import { Thumbnail } from "./Thumbnail.js";

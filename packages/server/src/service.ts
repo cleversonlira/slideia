@@ -19,8 +19,8 @@ import {
   type Presentation,
   type RichText,
   type Slide,
-} from "@apresenta/core";
-import { buildStandaloneHtml, type AssetLoader } from "@apresenta/renderer/node";
+} from "@slideia/core";
+import { buildStandaloneHtml, type AssetLoader } from "@slideia/renderer/node";
 import type { Config } from "./config.js";
 import { ImageError, decodeDataUri, fetchImage, placeholderImage, processImage } from "./images.js";
 import type { AssetRow, Author, Channel, PresentationRepo } from "./repo.js";
