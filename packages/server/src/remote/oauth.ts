@@ -279,8 +279,12 @@ export class OAuthServer {
       uris.some((r) => typeof r !== "string" || !validRedirectUri(r))
     )
       return null;
+    // CIMD clients are public clients here (PKCE required, no client authentication). A client
+    // that prefers another method but also lists "none" as supported (ChatGPT declares
+    // private_key_jwt + ["none", "private_key_jwt"]) uses "none", the only method we advertise.
     const method = (doc.token_endpoint_auth_method ?? "none") as string;
-    if (method !== "none") return null; // CIMD clients are public clients here
+    const supported = doc.token_endpoint_auth_methods_supported;
+    if (method !== "none" && !(Array.isArray(supported) && supported.includes("none"))) return null;
     const name = typeof doc.client_name === "string" ? doc.client_name.slice(0, 100) : u.hostname;
     const logo =
       typeof doc.logo_uri === "string" && doc.logo_uri.startsWith("https://") ? doc.logo_uri : null;

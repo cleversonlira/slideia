@@ -624,6 +624,35 @@ describe("Client ID Metadata Documents", () => {
       docServer.close();
     }
   }, 60_000);
+
+  it("accepts ChatGPT's document (private_key_jwt that also supports none)", async () => {
+    const docServer = http.createServer();
+    await new Promise<void>((r) => docServer.listen(0, "127.0.0.1", () => r()));
+    const origin = `http://127.0.0.1:${(docServer.address() as AddressInfo).port}`;
+    docServer.on("request", (req, res) => {
+      const url = `${origin}${req.url}`;
+      const methods =
+        req.url === "/jwt-only.json" ? ["private_key_jwt"] : ["none", "private_key_jwt"];
+      res.setHeader("content-type", "application/json");
+      res.end(
+        JSON.stringify({
+          client_id: url,
+          client_name: "ChatGPT",
+          redirect_uris: ["https://chatgpt.com/connector_platform_oauth_redirect"],
+          token_endpoint_auth_method: "private_key_jwt",
+          token_endpoint_auth_methods_supported: methods,
+          jwks_uri: "https://chatgpt.com/oauth/jwks.json",
+        }),
+      );
+    });
+    try {
+      const client = await rt.ctx.oauth.getClient(`${origin}/client.json`);
+      expect(client).toMatchObject({ kind: "cimd", name: "ChatGPT", authMethod: "none" });
+      expect(await rt.ctx.oauth.getClient(`${origin}/jwt-only.json`)).toBeNull();
+    } finally {
+      docServer.close();
+    }
+  }, 60_000);
 });
 
 describe("LGPD", () => {
