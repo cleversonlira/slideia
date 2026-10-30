@@ -290,6 +290,7 @@ describe("chat widget (MCP Apps)", () => {
     for (const t of tools.filter((x) => withView.includes(x.name))) {
       expect((t._meta as Meta).ui).toEqual({ resourceUri: VIEW_URI });
       expect((t._meta as Meta)["openai/outputTemplate"]).toBe(VIEW_URI);
+      expect((t._meta as Meta)["ui/resourceUri"]).toBe(VIEW_URI);
     }
   });
 

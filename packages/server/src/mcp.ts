@@ -31,6 +31,9 @@ export const VIEW_KEY = "slideia/view";
 function viewToolMeta(invoking: string, invoked: string): Record<string, unknown> {
   return {
     ui: { resourceUri: VIEW_URI },
+    // Deprecated flat key, still set by the official ext-apps helper (registerAppTool) because
+    // some hosts only read it.
+    "ui/resourceUri": VIEW_URI,
     "openai/outputTemplate": VIEW_URI,
     "openai/toolInvocation/invoking": invoking,
     "openai/toolInvocation/invoked": invoked,
