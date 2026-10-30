@@ -16,6 +16,8 @@ export interface RemoteConfig extends Config {
   listenPort: number;
   databaseUrl: string;
   blobs: { driver: "disk"; dir: string } | ({ driver: "s3" } & S3Options);
+  /** Files offered on the site, such as the Claude Desktop extension (slideia.mcpb). */
+  downloadsDir: string;
   /** PEM (PKCS#8, EC P-256). Generated and stored in the database when absent. */
   jwtPrivateKey?: string | undefined;
   /** HMAC key for signed links and CSRF. Generated and stored when absent. */
@@ -91,6 +93,7 @@ export function loadRemoteConfig(env: NodeJS.ProcessEnv = process.env): RemoteCo
             createBucket: env.S3_CREATE_BUCKET === "1",
           }
         : { driver: "disk", dir: resolve(dataDir, "blobs") },
+    downloadsDir: resolve(env.DOWNLOADS_DIR ?? resolve(dataDir, "downloads")),
     jwtPrivateKey: env.JWT_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     signingKey: env.SIGNING_KEY,
     mail: {

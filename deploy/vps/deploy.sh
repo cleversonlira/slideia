@@ -4,6 +4,7 @@
 #   deploy/vps/deploy.sh            # update: sync code, rebuild the image, restart
 #   deploy/vps/deploy.sh --setup    # first time: also nginx site, TLS certificate and backup cron
 #   SKIP_CHECKS=1 deploy/vps/deploy.sh   # skip local typecheck/tests
+#   SKIP_MCPB=1 deploy/vps/deploy.sh     # keep the published Claude Desktop extension as it is
 #
 # The image is built on the VPS from the synced sources. Secrets are generated on the server
 # the first time (/opt/slideia/.env, mode 600) and never leave it.
@@ -26,12 +27,20 @@ if [[ "${SKIP_CHECKS:-0}" != "1" ]]; then
 fi
 
 info "Enviando código para $VPS:$REMOTE/src..."
-ssh "$VPS" "mkdir -p $REMOTE/src $REMOTE/backups"
+ssh "$VPS" "mkdir -p $REMOTE/src $REMOTE/backups $REMOTE/downloads"
 rsync -az --delete \
   --exclude node_modules --exclude dist --exclude out --exclude data --exclude ppts \
   --exclude test-results --exclude playwright-report --exclude .env --exclude deploy \
   "$ROOT/" "$VPS:$REMOTE/src/"
 scp -q "$HERE/docker-compose.yml" "$HERE/backup.sh" "$HERE/watchdog.sh" "$HERE/restore-test.sh" "$VPS:$REMOTE/"
+
+if [[ "${SKIP_MCPB:-0}" != "1" ]]; then
+  info "Gerando e publicando a extensão do Claude Desktop (.mcpb)..."
+  VERSION=$(node -p "require('$ROOT/packages/server/package.json').version")
+  (cd "$ROOT" && pnpm -s mcpb >/dev/null) || error "Falha ao gerar o .mcpb."
+  scp -q "$ROOT/out/slideia-$VERSION.mcpb" "$VPS:$REMOTE/downloads/slideia.mcpb.tmp"
+  ssh "$VPS" "mv $REMOTE/downloads/slideia.mcpb.tmp $REMOTE/downloads/slideia.mcpb"
+fi
 
 info "Preparando configuração e subindo os contêineres (o build leva alguns minutos)..."
 ssh "$VPS" DOMAIN="$DOMAIN" REMOTE="$REMOTE" bash -s <<'EOF'

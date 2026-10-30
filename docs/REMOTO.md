@@ -87,6 +87,9 @@ A produção roda numa VPS Ubuntu com Docker e nginx já existentes (outros site
 
 - Tudo fica em `/opt/slideia` na VPS: `docker-compose.yml` (app + Postgres 17), `.env` gerado no
   próprio servidor (modo 600, segredos nunca saem de lá), `backup.sh` e `backups/`.
+- O deploy também gera a extensão do Claude Desktop (`pnpm mcpb`) e a publica em
+  `/opt/slideia/downloads/slideia.mcpb` (fora do backup), servida em `/baixar/slideia.mcpb` e
+  oferecida em `/como-conectar`. `SKIP_MCPB=1` mantém a que já está publicada.
 - O app escuta só em `127.0.0.1:8787`; o nginx do host termina o TLS
   (`deploy/vps/nginx-slideia.site.conf`: `client_max_body_size 25m`, SSE sem buffer, `www` → raiz).
 - Backup diário às 03:30 (dump do Postgres + volume de imagens), 14 dias de retenção.

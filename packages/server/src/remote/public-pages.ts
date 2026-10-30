@@ -10,6 +10,8 @@ export interface PublicInfo {
   operatorName: string | null;
   limits: { presentations: number; slides: number; storageBytes: number; imageBytes: number };
   linkTtlHours: number;
+  /** The Claude Desktop extension, when the server has one to offer. */
+  desktopExtension?: { url: string; bytes: number } | null;
 }
 
 const UPDATED = "30 de outubro de 2026";
@@ -46,6 +48,20 @@ export function landingPage(ctx: PageContext, p: PublicInfo): string {
   );
 }
 
+function desktopSection(ctx: PageContext, p: PublicInfo): string {
+  const ext = p.desktopExtension;
+  if (!ext) return "";
+  const name = h(ctx.productName);
+  return `<h2>Claude Desktop, sem conta (no seu computador)</h2>
+<p>Prefere que as apresentações fiquem só no seu computador? Instale a extensão do ${name} no Claude Desktop (macOS ou Windows). Ela não usa conta nem este servidor: as apresentações, as imagens e os HTML exportados ficam numa pasta sua, e o editor abre no seu navegador.</p>
+<p><a class="btn primary" href="${h(ext.url)}" download>Baixar a extensão (${(ext.bytes / 1048576).toFixed(0)} MB)</a></p>
+<ol><li>Dê dois cliques no arquivo <code>slideia.mcpb</code> baixado, ou arraste-o para a janela do Claude Desktop. Também dá para instalar em <strong>Configurações → Extensões → Configurações avançadas → Instalar extensão</strong>.</li>
+<li>Escolha a pasta das apresentações (padrão: <code>Apresentacoes</code>, na sua pasta pessoal) e conclua a instalação.</li>
+<li>Numa conversa, peça a apresentação. A prévia dos slides usa o Google Chrome ou o Microsoft Edge instalado.</li></ol>
+<p class="muted">Use a extensão <strong>ou</strong> o conector acima, não os dois ao mesmo tempo: cada um guarda as apresentações num lugar diferente.</p>
+`;
+}
+
 export function connectPage(ctx: PageContext, p: PublicInfo): string {
   const url = `<div class="url">${h(p.mcpUrl)}</div>`;
   return page(
@@ -72,6 +88,7 @@ export function connectPage(ctx: PageContext, p: PublicInfo): string {
 <li>Numa conversa nova, digite <code>@</code>, <strong>selecione o ${h(ctx.productName)}</strong> na lista e escreva em inglês, por exemplo: <em>“create a 6-slide presentation about solar energy in Brazilian Portuguese and send me the editor link”</em>.</li>
 <li>O Gemini pede confirmação (<strong>Allow</strong>) antes de criar ou alterar uma apresentação.</li></ol>
 
+${desktopSection(ctx, p)}
 <h2>Claude Code, Gemini CLI e outros clientes MCP</h2>
 <p>Use o transporte <strong>Streamable HTTP</strong> com OAuth. No Claude Code:</p>
 <div class="url">claude mcp add --transport http slideia ${h(p.mcpUrl)}</div>

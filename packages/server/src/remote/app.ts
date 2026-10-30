@@ -1,5 +1,7 @@
 import type { EventEmitter } from "node:events";
 import { createHash } from "node:crypto";
+import { statSync } from "node:fs";
+import { join } from "node:path";
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import { createMcpHandler, type AuthInfo } from "@modelcontextprotocol/server";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
@@ -868,10 +870,25 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     limits: config.limits,
     linkTtlHours: Math.round(config.linkTtl / 3600),
   };
+  // The Claude Desktop extension, published by deploy/vps/deploy.sh (absent in development).
+  const extensionPath = join(config.downloadsDir, "slideia.mcpb");
+  const desktopExtension = () => {
+    try {
+      return { url: "/baixar/slideia.mcpb", bytes: statSync(extensionPath).size };
+    } catch {
+      return null;
+    }
+  };
+  app.get("/baixar/slideia.mcpb", (_req, res) => {
+    if (!desktopExtension()) return void res.status(404).type("text").send("Não encontrado.");
+    res.setHeader("Cache-Control", "public, max-age=600");
+    // octet-stream: browsers keep the .mcpb name (it is a zip inside).
+    res.type("application/octet-stream").download(extensionPath, "slideia.mcpb");
+  });
   const publicPage =
     (render: (ctx: PageContext, p: PublicInfo) => string) => (_req: Request, res: Response) => {
       res.setHeader("Cache-Control", "public, max-age=300");
-      res.type("html").send(render(pc, publicInfo));
+      res.type("html").send(render(pc, { ...publicInfo, desktopExtension: desktopExtension() }));
     };
   app.get("/privacidade", publicPage(privacyPage));
   app.get("/termos", publicPage(termsPage));

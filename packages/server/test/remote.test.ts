@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import { createServer, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -250,6 +250,28 @@ describe("discovery", () => {
     expect(res.headers.get("www-authenticate")).toContain(
       `resource_metadata="${base}/.well-known/oauth-protected-resource/mcp"`,
     );
+  });
+
+  it("offers the Claude Desktop extension on the connect page only when it exists", async () => {
+    const page = async () => (await fetch(`${base}/como-conectar`)).text();
+    expect(await page()).not.toContain("/baixar/slideia.mcpb");
+    expect((await fetch(`${base}/baixar/slideia.mcpb`)).status).toBe(404);
+
+    const dir = rt.ctx.config.downloadsDir;
+    mkdirSync(dir, { recursive: true });
+    const bytes = Buffer.alloc(3 * 1048576, 7);
+    writeFileSync(join(dir, "slideia.mcpb"), bytes);
+    try {
+      const html = await page();
+      expect(html).toContain('href="/baixar/slideia.mcpb" download');
+      expect(html).toContain("Baixar a extensão (3 MB)");
+      const res = await fetch(`${base}/baixar/slideia.mcpb`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-disposition")).toBe("attachment; filename=slideia.mcpb");
+      expect(Buffer.from(await res.arrayBuffer()).equals(bytes)).toBe(true);
+    } finally {
+      rmSync(join(dir, "slideia.mcpb"));
+    }
   });
 
   it("serves the OpenAI domain verification token", async () => {

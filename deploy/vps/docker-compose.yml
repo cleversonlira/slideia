@@ -30,8 +30,10 @@ services:
       DATA_DIR: /data
       PORT: "8787"
       TRUST_PROXY: "1"
+      DOWNLOADS_DIR: /downloads
     ports: ["127.0.0.1:8787:8787"]
-    volumes: [data:/data]
+    # downloads/: the Claude Desktop extension (slideia.mcpb), uploaded by deploy.sh; not backed up.
+    volumes: [data:/data, ./downloads:/downloads:ro]
     networks: [internal]
     mem_limit: 2g
 
