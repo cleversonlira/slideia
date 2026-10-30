@@ -51,6 +51,33 @@ afterAll(async () => {
 });
 
 describe("MCP tools", () => {
+  it("publishes schemas in the subset Gemini accepts", async () => {
+    const { tools } = await client.listTools();
+    const bad: string[] = [];
+    const walk = (n: unknown, path: string) => {
+      if (!n || typeof n !== "object") return;
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        if (
+          ["$schema", "propertyNames", "additionalProperties", "$ref", "oneOf", "allOf"].includes(k)
+        )
+          bad.push(`${path}.${k}`);
+        if ((k === "maximum" || k === "minimum") && Math.abs(Number(v)) > 2 ** 31)
+          bad.push(`${path}.${k}`);
+        walk(v, `${path}.${k}`);
+      }
+    };
+    for (const t of tools) walk(t.inputSchema, t.name);
+    expect(bad).toEqual([]);
+    // Loose objects still accept their extra fields (validation is done by the full schema).
+    const created = await call("create_presentation", {
+      presentation: {
+        meta: { title: "Esquema portátil" },
+        slides: [{ layout: "cover", elements: [{ type: "title", text: "Olá" }] }],
+      },
+    });
+    expect(created.isError).toBeFalsy();
+  });
+
   it("lists the tools with honest annotations", async () => {
     const { tools } = await client.listTools();
     const byName = Object.fromEntries(tools.map((t) => [t.name, t]));

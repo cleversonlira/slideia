@@ -554,7 +554,54 @@ ${documento}`,
       (uri) => ({ contents: [{ uri: uri.href, mimeType: "application/json", text: ex.json }] }),
     );
   }
+  portableToolSchemas(server);
   return server;
+}
+
+/**
+ * Gemini's function calling accepts only an OpenAPI-like subset of JSON Schema and ignored our
+ * tools (it listed them but never called them). Strips the parts of the Zod output that do not
+ * change what is valid: `$schema`, `propertyNames: {type: string}` (JSON keys are strings),
+ * `additionalProperties: {}`/`true` (same as absent) and the ±MAX_SAFE_INTEGER integer bounds.
+ */
+export function portableSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(portableSchema);
+  if (!node || typeof node !== "object") return node;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+    if (k === "$schema" || k === "propertyNames") continue;
+    if (k === "additionalProperties" && (v === true || isEmptyObject(v))) continue;
+    if ((k === "maximum" || k === "minimum") && Math.abs(Number(v)) === Number.MAX_SAFE_INTEGER)
+      continue;
+    out[k] = portableSchema(v);
+  }
+  return out;
+}
+
+const isEmptyObject = (v: unknown) =>
+  !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0;
+
+/** Rewrites the SDK's tools/list answer with portableSchema (validation still uses Zod). */
+function portableToolSchemas(server: McpServer): void {
+  type Handler = (
+    req: unknown,
+    extra: unknown,
+  ) => Promise<{ tools: Array<Record<string, unknown>> }>;
+  const handlers = (server.server as unknown as { _requestHandlers: Map<string, Handler> })
+    ._requestHandlers;
+  const list = handlers.get("tools/list");
+  if (!list) return;
+  handlers.set("tools/list", async (req, extra) => {
+    const result = await list(req, extra);
+    return {
+      ...result,
+      tools: result.tools.map((t) => ({
+        ...t,
+        inputSchema: portableSchema(t.inputSchema),
+        ...(t.outputSchema ? { outputSchema: portableSchema(t.outputSchema) } : {}),
+      })),
+    };
+  });
 }
 
 function loadExamples(): Array<{ name: string; title: string; json: string }> {
