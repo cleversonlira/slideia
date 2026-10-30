@@ -210,10 +210,80 @@ describe("standalone export", () => {
   it("escapes </script> inside the embedded JSON", async () => {
     const p = deckWith("</script><script>alert(1)</script>");
     const { html } = await buildStandaloneHtml(p, { playerJs: "1" });
-    expect(html.match(/<script/g)?.length).toBe(3);
+    expect(html.match(/<script/g)?.length).toBe(4);
     expect((extractPresentationJson(html) as Presentation).meta.title).toBe(
       "</script><script>alert(1)</script>",
     );
+  });
+
+  it("stores an image used on several slides once and inlines it again on extract", async () => {
+    const p = aurora();
+    const ref = "asset:cidade";
+    const image = { type: "image" as const, asset: ref, alt: "Cidade" };
+    const deck = {
+      ...p,
+      slides: p.slides.map((s, i) =>
+        i < 3 ? { ...s, background: { type: "image", asset: ref } } : s,
+      ),
+    } as Presentation;
+    deck.slides[0]!.elements.push(image as never);
+    const { html } = await buildStandaloneHtml(deck, {
+      loadAsset: directoryAssetLoader(join(examples, "assets")),
+      playerJs: "1",
+    });
+    const images = JSON.parse(
+      /<script type="application\/json" id="images">([\s\S]*?)<\/script>/.exec(html)![1]!,
+    ) as Record<string, string>;
+    const data = images[ref]!;
+    expect(data).toMatch(/^data:image\//);
+    expect(html.split(data).length - 1).toBe(1);
+    const back = extractPresentationJson(html) as Presentation;
+    expect(back.slides[0]!.background).toEqual({ type: "image", asset: data });
+    expect(back.slides[2]!.background).toEqual({ type: "image", asset: data });
+    expect(back.slides[0]!.elements.at(-1)).toMatchObject({ asset: data });
+    expect(JSON.stringify(back)).not.toContain(ref);
+  });
+
+  it("draws the brand logo, with the dark variant on dark slides, and embeds it", async () => {
+    const p = normalizePresentation({
+      meta: {
+        title: "Marca",
+        themeOverrides: {
+          cover: "#00263e",
+          logo: { asset: "asset:cidade", assetOnDark: "asset:cidade2", alt: "ACME", size: "s" },
+        },
+      },
+      slides: [
+        { layout: "cover", elements: [{ type: "title", text: "Capa" }] },
+        { layout: "title-content", elements: [{ type: "title", text: "Conteúdo" }] },
+        {
+          layout: "closing",
+          elements: [
+            { type: "title", text: "Fim" },
+            { type: "image", slot: "logo", asset: "asset:cidade", alt: "ACME" },
+          ],
+        },
+      ],
+    });
+    const ctx = createContext(p, { resolveAsset: (r) => `https://cdn.test/${r.slice(6)}.png` });
+    const [cover, content, closing] = p.slides.map((sl) => renderSlide(sl, ctx));
+    expect(cover).toContain(
+      '<img class="brand-logo pos-bottom-right size-s" src="https://cdn.test/cidade2.png" alt="ACME"',
+    );
+    expect(content).toContain('src="https://cdn.test/cidade.png" alt="ACME"');
+    expect(closing).not.toContain("brand-logo");
+
+    const assets = join(examples, "assets");
+    const { html } = await buildStandaloneHtml(p, {
+      loadAsset: async (id) => directoryAssetLoader(assets)(id === "cidade2" ? "cidade" : id),
+      playerJs: "1",
+    });
+    const images = JSON.parse(
+      /<script type="application\/json" id="images">([\s\S]*?)<\/script>/.exec(html)![1]!,
+    ) as Record<string, string>;
+    expect(Object.keys(images).sort()).toEqual(["asset:cidade", "asset:cidade2"]);
+    const back = extractPresentationJson(html) as Presentation;
+    expect(back.meta.themeOverrides?.logo?.asset).toMatch(/^data:image\//);
   });
 
   it("reports unknown icons", () => {

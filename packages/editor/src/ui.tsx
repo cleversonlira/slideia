@@ -53,17 +53,27 @@ export function Field({
   label,
   children,
   hint,
+  group,
 }: {
   label: string;
   children: ReactNode;
   hint?: string;
+  /** Several controls: a labelled group instead of a <label> (which would click the first one). */
+  group?: boolean;
 }) {
-  return (
-    <label className="field">
+  const inner = (
+    <>
       <span className="field-label">{label}</span>
       {children}
       {hint && <span className="field-hint">{hint}</span>}
-    </label>
+    </>
+  );
+  return group ? (
+    <div className="field" role="group" aria-label={label}>
+      {inner}
+    </div>
+  ) : (
+    <label className="field">{inner}</label>
   );
 }
 

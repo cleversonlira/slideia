@@ -48,8 +48,9 @@ export function buildGuide(): string {
 5. Before editing later, call get_presentation (or get_changes) to see manual edits; never overwrite them.
 
 ## Presentation JSON
-{ "meta": { "title", "author"?, "lang" (default "pt-BR"), "aspectRatio" ("16:9"|"4:3"), "theme", "themeOverrides"? {accent:"#hex"}, "defaultTransition" {type, direction?, durationMs?} },
+{ "meta": { "title", "author"?, "lang" (default "pt-BR"), "aspectRatio" ("16:9"|"4:3"), "theme", "themeOverrides"? {…}, "defaultTransition" {type, direction?, durationMs?} },
   "slides": [ { "layout", "variant"?, "elements": [ … ], "background"?, "transition"?, "notes"? } ] }
+Company brand (when the user gives colors or a logo): pick the closest theme, then "themeOverrides": { "accent": "#main", "accent2"?: "#secondary", "cover"?: "#dark brand color for cover/section/closing backgrounds", "fontHeading"?, "fontBody"?, "logo"?: { "asset": "https://…/logo.png" (transparent PNG/WebP; SVG is not accepted), "assetOnDark"?: white variant for dark slides, "alt", "position"? bottom-right|bottom-left|top-right|top-left, "size"? s|m|l } }. The logo appears on every slide inside the margin; do not also add it as an image element (except a bigger one on the cover, in the "logo" slot).
 Ids are optional when creating. "slot" is optional when the element type fits only one free slot (elements fill slots in order).
 
 ## Elements (field "type")

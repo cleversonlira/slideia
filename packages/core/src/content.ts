@@ -133,3 +133,44 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 export function clone<T>(v: T): T {
   return structuredClone(v);
 }
+
+type ImageHolder = { asset?: unknown; assetOnDark?: unknown };
+
+/**
+ * Returns a copy of a presentation (stored, input, or not yet validated) with every image
+ * reference passed through `fn`: image elements, image backgrounds and the brand logo.
+ * Anything that is not shaped like a presentation is returned unchanged.
+ */
+export function mapImageRefs<T>(pres: T, fn: (ref: string) => string): T {
+  const p = pres as { slides?: unknown; meta?: { themeOverrides?: { logo?: ImageHolder } } };
+  if (!p || typeof p !== "object" || !Array.isArray(p.slides)) return pres;
+  const swap = <H>(o: H): H => {
+    const h = o as ImageHolder | null;
+    if (!h || typeof h !== "object") return o;
+    const out: ImageHolder = { ...h };
+    if (typeof h.asset === "string") out.asset = fn(h.asset);
+    if (typeof h.assetOnDark === "string") out.assetOnDark = fn(h.assetOnDark);
+    return out as H;
+  };
+  const slides = (p.slides as Array<Record<string, unknown>>).map((s) => {
+    if (!s || typeof s !== "object") return s;
+    const out = { ...s };
+    if (Array.isArray(s.elements))
+      out.elements = s.elements.map((e: { type?: unknown }) => (e?.type === "image" ? swap(e) : e));
+    const bg = s.background as { type?: unknown } | undefined;
+    if (bg?.type === "image") out.background = swap(bg);
+    return out;
+  });
+  const logo = p.meta?.themeOverrides?.logo;
+  const meta = logo
+    ? { ...p.meta, themeOverrides: { ...p.meta!.themeOverrides, logo: swap(logo) } }
+    : p.meta;
+  return { ...p, meta, slides } as T;
+}
+
+/** Every distinct image reference of a presentation (see `mapImageRefs`). */
+export function imageRefs(pres: unknown): string[] {
+  const refs = new Set<string>();
+  mapImageRefs(pres, (r) => (refs.add(r), r));
+  return [...refs];
+}

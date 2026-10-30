@@ -237,6 +237,22 @@ test("editor: outline mode, layout picker, undo and theme change", async ({ page
   await page.locator(".theme-card", { hasText: "Noturno" }).click();
   await expect(page.locator(".editor-stage")).toHaveAttribute("style", /--c-bg:\s*#0b1020/);
 
+  // Brand logo: uploaded in the deck panel, drawn in the corner of the current slide.
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Enviar logo" }).click();
+  await (
+    await chooser
+  ).setFiles(fileURLToPath(new URL("../assets/examples/assets/cidade.jpg", import.meta.url)));
+  await expect(page.locator(".editor-stage .brand-logo.pos-bottom-right")).toHaveCount(1);
+  await page
+    .locator(".props-section select")
+    .filter({ hasText: "Inferior direito" })
+    .selectOption("top-left");
+  await expect(page.locator(".editor-stage .brand-logo.pos-top-left")).toHaveCount(1);
+  await page
+    .locator(".props-scroll")
+    .screenshot({ path: test.info().outputPath("brand-panel.png") });
+
   await page.locator(".seg button", { hasText: "Roteiro" }).click();
   const first = page.locator(".outline-slide").first().locator(".mini-editor").first();
   await first.click();

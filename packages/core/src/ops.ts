@@ -23,13 +23,12 @@ import {
   AssetRef,
   Background,
   ElementInput,
-  FontId,
-  HexColor,
   Id,
   LayoutId,
   RichTextInput,
   SlideInput,
   ThemeId,
+  ThemeOverrides,
   Transition,
   type Element,
   type Paragraph,
@@ -148,15 +147,7 @@ export const Operation = z.discriminatedUnion("op", [
             .optional(),
           aspectRatio: z.enum(["16:9", "4:3"]).optional(),
           theme: ThemeId.optional(),
-          themeOverrides: z
-            .object({
-              accent: HexColor.optional(),
-              fontHeading: FontId.optional(),
-              fontBody: FontId.optional(),
-            })
-            .strict()
-            .nullable()
-            .optional(),
+          themeOverrides: ThemeOverrides.nullable().optional(),
           defaultTransition: Transition.optional(),
         })
         .strict(),

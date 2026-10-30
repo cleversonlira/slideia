@@ -1,4 +1,5 @@
 import type { Presentation } from "@slideia/core/browser";
+import { imageResolver, type ImageMap } from "../embedded.js";
 import type { IconMap } from "../icons.js";
 import { Player } from "./app.js";
 import { bootPresenter } from "./presenter.js";
@@ -21,11 +22,12 @@ function boot(): void {
     return;
   }
   const icons = readJson<IconMap>("icons", {});
+  const resolveAsset = imageResolver(readJson<ImageMap>("images", {}));
   if (location.hash === "#presenter") {
-    bootPresenter(root, pres, icons);
+    bootPresenter(root, pres, icons, resolveAsset);
     return;
   }
-  const player = new Player(root, pres, icons);
+  const player = new Player(root, pres, icons, resolveAsset);
   (window as unknown as { apresenta: Player }).apresenta = player;
   if (location.hash === "#print")
     void document.fonts.ready.then(() => setTimeout(() => window.print(), 300));

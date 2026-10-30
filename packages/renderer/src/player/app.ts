@@ -31,8 +31,9 @@ export class Player {
     readonly root: HTMLElement,
     public pres: Presentation,
     readonly icons: IconMap,
+    readonly resolveAsset: (ref: string) => string = (ref) => ref,
   ) {
-    this.ctx = createContext(pres, { icons });
+    this.ctx = createContext(pres, { icons, resolveAsset });
     root.innerHTML = `<div class="stage-wrap"><div class="stage" role="region" aria-roledescription="apresentação" aria-live="polite"></div></div><div class="blank-layer"></div>`;
     this.stage = root.querySelector(".stage")!;
     this.chrome = new Chrome(this);
@@ -59,7 +60,7 @@ export class Player {
   // ---------------------------------------------------------------------------
 
   renderAll(): void {
-    this.ctx = createContext(this.pres, { icons: this.icons });
+    this.ctx = createContext(this.pres, { icons: this.icons, resolveAsset: this.resolveAsset });
     this.visible = this.pres.slides.filter((s) => !s.hidden);
     this.stage.innerHTML = this.visible.map((s) => renderSlide(s, this.ctx)).join("");
     this.slides = [...this.stage.querySelectorAll<HTMLElement>(":scope > .slide")];

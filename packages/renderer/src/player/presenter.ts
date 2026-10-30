@@ -8,8 +8,13 @@ import { Keymap } from "./keys.js";
 import { Channel, type Blank, type Message } from "./protocol.js";
 
 /** Presenter view: runs in a second window opened by the main player (URL hash #presenter). */
-export function bootPresenter(root: HTMLElement, pres: Presentation, icons: IconMap): void {
-  const ctx = createContext(pres, { icons });
+export function bootPresenter(
+  root: HTMLElement,
+  pres: Presentation,
+  icons: IconMap,
+  resolveAsset: (ref: string) => string,
+): void {
+  const ctx = createContext(pres, { icons, resolveAsset });
   const visible = pres.slides.filter((s) => !s.hidden);
   const { width, height } = canvasSize(pres.meta.aspectRatio);
   const keymap = new Keymap();

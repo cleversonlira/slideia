@@ -360,21 +360,45 @@ export const THEMES: Record<ThemeId, Theme> = {
 export const EMPHASIS_LAYOUTS: readonly LayoutId[] = ["cover", "section", "closing"];
 
 /** Theme with the presentation's overrides applied. */
+/** `color` itself, or mixed toward `toward` until it reaches `min` contrast against `bg`. */
+function readableOn(color: string, bg: string, toward: string, min = 3): string {
+  for (const t of [0, 0.25, 0.5, 0.75]) {
+    const c = t ? mixHex(color, toward, t) : color;
+    if (contrastRatio(c, bg) >= min) return c;
+  }
+  return toward;
+}
+
 export function resolveTheme(meta: Pick<Meta, "theme" | "themeOverrides">): Theme {
   const base = THEMES[meta.theme];
   const o = meta.themeOverrides;
   if (!o) return base;
   const colors = { ...base.colors };
+  const chart = [...base.colors.chart];
+  let emphasis = base.emphasis;
   if (o.accent) {
     const accent = normalizeHex(o.accent);
     colors.accent = accent;
     colors.onAccent =
       contrastRatio(accent, "#ffffff") >= contrastRatio(accent, "#111111") ? "#ffffff" : "#111111";
-    colors.chart = [accent, ...base.colors.chart.slice(1)] as unknown as ThemeColors["chart"];
+    chart[0] = accent;
   }
+  if (o.accent2) chart[1] = colors.accent2 = normalizeHex(o.accent2);
+  if (o.cover) {
+    const cover = normalizeHex(o.cover);
+    emphasis = { type: "color", color: cover };
+    // A cover that needs the inverse palette also becomes the inverse background.
+    if (contrastRatio(colors.inverseText, cover) > contrastRatio(colors.text, cover)) {
+      colors.inverseBg = cover;
+      colors.inverseSurface = mixHex(cover, colors.inverseText, 0.08);
+    }
+  }
+  if (o.accent || o.cover)
+    colors.inverseAccent = readableOn(colors.accent, colors.inverseBg, colors.inverseText);
   return {
     ...base,
-    colors,
+    colors: { ...colors, chart: chart as unknown as ThemeColors["chart"] },
+    emphasis,
     fonts: {
       ...base.fonts,
       heading: o.fontHeading ?? base.fonts.heading,

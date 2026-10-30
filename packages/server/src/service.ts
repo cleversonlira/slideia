@@ -312,7 +312,8 @@ export class PresentationService {
   }
 
   /**
-   * Replaces every `"asset": "<http(s) URL | data URI>"` inside `value` by "asset:<id>".
+   * Replaces every `"asset"`/`"assetOnDark": "<http(s) URL | data URI>"` inside `value` by
+   * "asset:<id>".
    * Failed downloads become a placeholder image and a note, so one bad URL does not lose the deck.
    */
   async internalizeImages(value: unknown, notes: string[]): Promise<unknown> {
@@ -340,7 +341,7 @@ export class PresentationService {
       const out: Record<string, unknown> = {};
       for (const [k, child] of Object.entries(v)) {
         if (
-          k === "asset" &&
+          (k === "asset" || k === "assetOnDark") &&
           typeof child === "string" &&
           /^(?:https?:\/\/|data:image\/)/i.test(child)
         ) {

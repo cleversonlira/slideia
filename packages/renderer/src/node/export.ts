@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { resolveTheme, type Presentation } from "@slideia/core";
+import { imageRefs, resolveTheme, type Presentation } from "@slideia/core";
 import { deckCss } from "../css.js";
+import { readEmbeddedPresentation, type ImageMap } from "../embedded.js";
 import { esc } from "../escape.js";
 import { collectIconNames } from "../icons.js";
 import { PLAYER_CSS, PRINT_43 } from "../player/styles.js";
@@ -48,18 +49,17 @@ export async function loadPlayerJs(): Promise<string> {
 const PLACEHOLDER =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
+/** One data URI per distinct image reference of the deck (data: references stay inline). */
 async function embedImages(
   p: Presentation,
   opts: ExportOptions,
   warnings: string[],
-): Promise<Presentation> {
-  const cache = new Map<string, string>();
-  const resolve = async (ref: string): Promise<string> => {
-    const hit = cache.get(ref);
-    if (hit) return hit;
+): Promise<ImageMap> {
+  const images: ImageMap = {};
+  for (const ref of imageRefs(p)) {
+    if (ref.startsWith("data:")) continue;
     let out = PLACEHOLDER;
-    if (ref.startsWith("data:")) out = ref;
-    else if (ref.startsWith("asset:")) {
+    if (ref.startsWith("asset:")) {
       const a = opts.loadAsset ? await opts.loadAsset(ref.slice(6)) : null;
       if (a) out = toDataUri(a);
       else warnings.push(`Image ${ref} not found; a blank placeholder was used.`);
@@ -71,22 +71,9 @@ async function embedImages(
           `Remote image ${ref} was not embedded (the file works offline only with embedded images).`,
         );
     }
-    cache.set(ref, out);
-    return out;
-  };
-
-  const slides = [];
-  for (const s of p.slides) {
-    const elements = [];
-    for (const e of s.elements)
-      elements.push(e.type === "image" ? { ...e, asset: await resolve(e.asset) } : e);
-    const background =
-      s.background?.type === "image"
-        ? { ...s.background, asset: await resolve(s.background.asset) }
-        : s.background;
-    slides.push(background ? { ...s, elements, background } : { ...s, elements });
+    images[ref] = out;
   }
-  return { ...p, slides };
+  return images;
 }
 
 function sha256(text: string): string {
@@ -99,7 +86,8 @@ export async function buildStandaloneHtml(
   opts: ExportOptions = {},
 ): Promise<ExportResult> {
   const warnings: string[] = [];
-  const p = await embedImages(input, opts, warnings);
+  const p = input;
+  const images = await embedImages(p, opts, warnings);
   const theme = resolveTheme(p.meta);
 
   const { icons, missing } = lucideIconMap(collectIconNames(p));
@@ -138,6 +126,7 @@ export async function buildStandaloneHtml(
 <div id="app" class="deck"></div>
 <noscript><p style="font:18px system-ui;color:#fff;padding:24px">Ative o JavaScript para ver esta apresentação.</p></noscript>
 <script type="application/json" id="presentation">${safeJson(p)}</script>
+<script type="application/json" id="images">${safeJson(images)}</script>
 <script type="application/json" id="icons">${safeJson(icons)}</script>
 <script>${js}</script>
 </body>
@@ -147,8 +136,4 @@ export async function buildStandaloneHtml(
 }
 
 /** Extracts the embedded presentation JSON from an exported HTML file (for re-import). */
-export function extractPresentationJson(html: string): unknown {
-  const m = /<script type="application\/json" id="presentation">([\s\S]*?)<\/script>/.exec(html);
-  if (!m) throw new Error("No embedded presentation found in this HTML file.");
-  return JSON.parse(m[1]!);
-}
+export const extractPresentationJson = readEmbeddedPresentation;

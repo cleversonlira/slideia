@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Presentation } from "@slideia/core/browser";
+import { readEmbeddedPresentation } from "@slideia/renderer";
 import { ApiError, api, exportUrls, type PresentationSummary } from "../api.js";
 import { AccountMenu } from "../components/AccountMenu.js";
 import { Thumbnail } from "../components/Thumbnail.js";
@@ -9,8 +10,7 @@ import { toast } from "../state.js";
 import { Menu } from "../ui.js";
 
 function extractJson(text: string): unknown {
-  const m = /<script type="application\/json" id="presentation">([\s\S]*?)<\/script>/.exec(text);
-  return JSON.parse(m ? m[1]! : text);
+  return text.includes('id="presentation"') ? readEmbeddedPresentation(text) : JSON.parse(text);
 }
 
 export function ListPage() {

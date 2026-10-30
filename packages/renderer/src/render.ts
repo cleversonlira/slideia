@@ -5,6 +5,7 @@ import {
   isEmptyRichText,
   resolveTheme,
   slideTone,
+  type BrandLogo,
   type Element,
   type LayoutId,
   type Presentation,
@@ -22,6 +23,8 @@ export interface RenderContext {
   icons: IconMap;
   /** Resolves an AssetRef ("asset:<id>", URL or data URI) to an <img> src. */
   resolveAsset: (ref: string) => string;
+  /** Brand logo drawn in a corner of every slide (meta.themeOverrides.logo). */
+  logo?: BrandLogo | undefined;
 }
 
 export function createContext(
@@ -33,6 +36,7 @@ export function createContext(
     lang: p.meta.lang,
     icons: opts.icons ?? {},
     resolveAsset: opts.resolveAsset ?? ((ref) => ref),
+    logo: p.meta.themeOverrides?.logo,
   };
 }
 
@@ -164,6 +168,7 @@ export function renderSlide(
     `<section class="${classes.join(" ")}" data-slide-id="${esc(slide.id)}" data-steps="${count}">` +
     renderBackground(slide, ctx) +
     `<div class="slide-body">${TEMPLATES[slide.layout].map(renderRegion).join("")}</div>` +
+    (bySlot.get("logo")?.length ? "" : renderBrandLogo(ctx, tone)) +
     `</section>`
   );
 }
@@ -174,6 +179,16 @@ function statSizing(els: Element[]): string {
   if (!stats.length) return "";
   const chars = Math.max(4, ...stats.map((s) => [...s.value].length + (s.trend ? 1.5 : 0)));
   return ` style="--chars:${chars}"`;
+}
+
+function renderBrandLogo(ctx: RenderContext, tone: "base" | "inverse"): string {
+  const logo = ctx.logo;
+  if (!logo) return "";
+  const ref = tone === "inverse" && logo.assetOnDark ? logo.assetOnDark : logo.asset;
+  const src = safeImageSrc(ctx.resolveAsset(ref));
+  if (!src) return "";
+  const cls = `brand-logo pos-${logo.position ?? "bottom-right"} size-${logo.size ?? "m"}`;
+  return `<img class="${cls}" src="${esc(src)}" alt="${esc(logo.alt ?? "")}" draggable="false">`;
 }
 
 function renderBackground(slide: Slide, ctx: RenderContext): string {

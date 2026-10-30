@@ -94,7 +94,12 @@ type Presentation = {
     lang: string;                   // BCP 47, ex. "pt-BR" — usado no spellcheck e no <html lang>
     aspectRatio: "16:9" | "4:3";
     theme: ThemeId;
-    themeOverrides?: { accent?: Hex; fontHeading?: FontId; fontBody?: FontId };
+    themeOverrides?: {                                   // marca da empresa sobre o tema
+      accent?: Hex; accent2?: Hex; cover?: Hex;          // cover: fundo de capa/seção/encerramento
+      fontHeading?: FontId; fontBody?: FontId;
+      logo?: { asset: AssetRef; assetOnDark?: AssetRef; alt?: string;
+               position?: "top-left"|"top-right"|"bottom-left"|"bottom-right"; size?: "s"|"m"|"l" };
+    };
     defaultTransition: Transition;
   };
   slides: Slide[];
@@ -621,3 +626,21 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
 - Pendente: `subscriptions/listen` + `handler.notify` permitiriam avisar clientes 2026 quando a lista
   de ferramentas muda (evitaria reconectar).
 
+
+## 22. Marca da empresa e export sem imagens repetidas
+
+- `meta.themeOverrides` virou a "marca": cor principal (`accent`), secundária (`accent2`, 2ª série
+  dos gráficos), fundo de capa/seção/encerramento (`cover`, que também vira o fundo da paleta
+  inversa quando é escuro) e logo. `resolveTheme` recalcula `inverseAccent` para manter contraste
+  ≥ 3 sobre o fundo inverso.
+- O logo é desenhado pelo renderer em todo slide (`img.brand-logo`), centrado na margem (`--pad`),
+  nunca sobre o conteúdo; slides com elemento no slot `logo` (capa/encerramento) não repetem.
+  `assetOnDark` é usado nos slides de tom inverso. No editor: aba Apresentação → Marca.
+- `mapImageRefs`/`imageRefs` (core) são o único caminho que percorre referências de imagem
+  (elementos, fundos e logo): export, widget e leitura do HTML exportado. `internalizeImages`
+  (servidor) baixa URLs em `asset` e `assetOnDark`.
+- O HTML exportado guarda o JSON com as referências originais e um mapa
+  `<script type="application/json" id="images">` (referência → data URI): cada imagem é embutida
+  uma vez, mesmo usada em vários slides. `readEmbeddedPresentation` (renderer, usado pelo CLI e pela
+  importação do editor) devolve a apresentação com as imagens de novo inline; arquivos antigos, sem
+  o mapa, continuam funcionando.

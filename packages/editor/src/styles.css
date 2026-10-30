@@ -1366,3 +1366,42 @@ kbd {
     grid-template-columns: 1fr;
   }
 }
+.props-sub {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ui-muted);
+}
+.logo-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.props-section .logo-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  padding: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 12px;
+}
+.props-section .logo-slot.dark {
+  background: #1f2430;
+  color: #cbd2dc;
+}
+.logo-slot img {
+  max-width: 100%;
+  height: 40px;
+  object-fit: contain;
+}
+.logo-slot em {
+  height: 40px;
+  font-size: 24px;
+  font-style: normal;
+  line-height: 40px;
+}

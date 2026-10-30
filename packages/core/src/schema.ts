@@ -5,6 +5,7 @@ import {
   FONT_IDS,
   LAYOUT_IDS,
   PARAGRAPH_SIZES,
+  LOGO_POSITIONS,
   THEME_IDS,
   TRANSITION_TYPES,
   type ElementType,
@@ -389,13 +390,41 @@ export const SlideInput = slideShape(
 );
 export type SlideInput = z.infer<typeof SlideInput>;
 
+export const BrandLogo = z
+  .object({
+    asset: AssetRef.describe("The logo, preferably a PNG/WebP with a transparent background."),
+    assetOnDark: AssetRef.optional().describe(
+      "Variant for dark slides (e.g. a white logo). Without it the main logo is used everywhere.",
+    ),
+    alt: z.string().max(200).optional(),
+    position: z.enum(LOGO_POSITIONS).optional().describe('Default "bottom-right".'),
+    size: z
+      .enum(["s", "m", "l"])
+      .optional()
+      .describe('Height in the slide margin: "s" 40px, "m" 56px (default), "l" 80px.'),
+  })
+  .strict()
+  .describe(
+    "Company logo shown in a corner of every slide (inside the margin, never over content); slides with their own logo element skip it.",
+  );
+export type BrandLogo = z.infer<typeof BrandLogo>;
+
 export const ThemeOverrides = z
   .object({
-    accent: HexColor.optional(),
+    accent: HexColor.optional().describe(
+      "Main brand color: highlights, buttons, first chart series.",
+    ),
+    accent2: HexColor.optional().describe("Secondary brand color (second chart series, details)."),
+    cover: HexColor.optional().describe(
+      "Background of cover, section and closing slides (often the brand's dark color).",
+    ),
     fontHeading: FontId.optional(),
     fontBody: FontId.optional(),
+    logo: BrandLogo.optional(),
   })
-  .strict();
+  .strict()
+  .describe("Brand customization on top of the theme: colors, fonts and logo.");
+export type ThemeOverrides = z.infer<typeof ThemeOverrides>;
 
 const metaShape = {
   title: z.string().min(1).max(200),

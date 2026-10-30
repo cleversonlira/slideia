@@ -57,6 +57,12 @@ export const SLIDE_CSS = String.raw`
 .deck .slide-bg img{width:100%;height:100%;object-fit:cover;display:block}
 .deck .slide-bg .overlay{position:absolute;inset:0;background:#000}
 .deck .slide-body{position:relative;z-index:1;width:100%;height:100%;padding:var(--pad);display:flex;flex-direction:column;gap:calc(var(--pad)*.42)}
+.deck .brand-logo{position:absolute;z-index:2;height:var(--logo-h);width:auto;max-width:28%;object-fit:contain;pointer-events:none;--logo-h:56px;--logo-o:max(12px,calc((var(--pad) - var(--logo-h))/2))}
+.deck .brand-logo.size-s{--logo-h:40px}.deck .brand-logo.size-l{--logo-h:80px}
+.deck .brand-logo.pos-top-left,.deck .brand-logo.pos-top-right{top:var(--logo-o)}
+.deck .brand-logo.pos-bottom-left,.deck .brand-logo.pos-bottom-right{bottom:var(--logo-o)}
+.deck .brand-logo.pos-top-left,.deck .brand-logo.pos-bottom-left{left:var(--pad)}
+.deck .brand-logo.pos-top-right,.deck .brand-logo.pos-bottom-right{right:var(--pad)}
 .deck .region{display:flex;min-width:0;min-height:0;gap:calc(var(--pad)*.42)}
 .deck .slot{display:flex;flex-direction:column;min-width:0;min-height:0;gap:calc(var(--pad)*.28)}
 .deck .el{--fit:1;min-width:0;min-height:0;flex:0 1 auto;overflow:hidden;position:relative}

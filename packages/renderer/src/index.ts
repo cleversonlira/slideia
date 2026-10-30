@@ -7,5 +7,6 @@ export * from "./render.js";
 export * from "./css.js";
 export * from "./fit.js";
 export * from "./dom-parse.js";
+export * from "./embedded.js";
 export { PLAYER_CSS } from "./player/styles.js";
 export { runTransition, revealNode, prefersReducedMotion } from "./player/transitions.js";

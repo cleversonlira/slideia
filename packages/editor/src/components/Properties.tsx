@@ -1,19 +1,21 @@
 import {
   FONT_IDS,
   LAYOUTS,
+  LOGO_POSITIONS,
   LAYOUT_IDS,
   THEMES,
   TRANSITION_TYPES,
   checkDesign,
   findFreeSlot,
+  type BrandLogo,
   type ElementType,
   type Presentation,
   type Slide,
   type Transition,
 } from "@slideia/core/browser";
 import { FONTS } from "@slideia/renderer";
-import { useMemo } from "react";
-import { resolveAsset } from "../api.js";
+import { useMemo, useState } from "react";
+import { api, resolveAsset } from "../api.js";
 import {
   DIRECTION_LABELS,
   ELEMENT_LABELS,
@@ -21,7 +23,7 @@ import {
   TRANSITION_LABELS,
   defaultElement,
 } from "../defaults.js";
-import { currentSlide, mutate, selectElement, useEditor, type Panel } from "../state.js";
+import { currentSlide, mutate, selectElement, toast, useEditor, type Panel } from "../state.js";
 import { ColorPicker, Field, Select, TextInput, Toggle } from "../ui.js";
 import { transitionTest } from "./Canvas.js";
 import { ElementProps } from "./ElementProps.js";
@@ -309,12 +311,30 @@ function DeckProps({ pres }: { pres: Presentation }) {
   const m = pres.meta;
   const update = (patch: Record<string, unknown>) => mutate([{ op: "update_presentation", patch }]);
   const overrides = m.themeOverrides ?? {};
-  const setOverride = (key: string, value: string | null) => {
-    const next = { ...overrides } as Record<string, string>;
+  const setOverride = (key: string, value: unknown) => {
+    const next = { ...overrides } as Record<string, unknown>;
     if (value) next[key] = value;
     else delete next[key];
     update({ themeOverrides: Object.keys(next).length ? next : null });
   };
+  const theme = THEMES[m.theme];
+  const brandColor = (key: "accent" | "accent2" | "cover", label: string, fallback: string) => (
+    <Field label={label}>
+      <div className="row">
+        <input
+          type="color"
+          value={overrides[key] ?? fallback}
+          onChange={(e) => setOverride(key, e.target.value)}
+          aria-label={label}
+        />
+        {overrides[key] && (
+          <button type="button" onClick={() => setOverride(key, null)}>
+            Usar a do tema
+          </button>
+        )}
+      </div>
+    </Field>
+  );
   const warnings = useMemo(() => checkDesign(pres).filter((w) => !w.slideId), [pres]);
   return (
     <div className="props-section">
@@ -374,21 +394,19 @@ function DeckProps({ pres }: { pres: Presentation }) {
           ))}
         </div>
       </Field>
-      <Field label="Cor de destaque">
-        <div className="row">
-          <input
-            type="color"
-            value={overrides.accent ?? THEMES[m.theme].colors.accent}
-            onChange={(e) => setOverride("accent", e.target.value)}
-            aria-label="Cor de destaque"
-          />
-          {overrides.accent && (
-            <button type="button" onClick={() => setOverride("accent", null)}>
-              Usar a do tema
-            </button>
-          )}
-        </div>
-      </Field>
+      <h4 className="props-sub">Marca</h4>
+      {brandColor("accent", "Cor principal", theme.colors.accent)}
+      {brandColor("accent2", "Cor secundária", theme.colors.accent2)}
+      {brandColor(
+        "cover",
+        "Fundo da capa e seções",
+        theme.emphasis.type === "color"
+          ? theme.emphasis.color
+          : theme.emphasis.type === "gradient"
+            ? theme.emphasis.from
+            : theme.colors.inverseBg,
+      )}
+      <BrandLogoField logo={overrides.logo} onChange={(logo) => setOverride("logo", logo)} />
       <div className="row">
         <Field label="Fonte dos títulos">
           <Select
@@ -428,5 +446,110 @@ function DeckProps({ pres }: { pres: Presentation }) {
         </div>
       )}
     </div>
+  );
+}
+
+const LOGO_POSITION_LABELS: Record<(typeof LOGO_POSITIONS)[number], string> = {
+  "bottom-right": "Inferior direito",
+  "bottom-left": "Inferior esquerdo",
+  "top-right": "Superior direito",
+  "top-left": "Superior esquerdo",
+};
+
+/** Brand logo of the deck: upload, dark-slide variant, corner and size. */
+function BrandLogoField({
+  logo,
+  onChange,
+}: {
+  logo: BrandLogo | undefined;
+  onChange: (logo: BrandLogo | null) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const pick = (key: "asset" | "assetOnDark") => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/webp,image/jpeg,image/gif,image/avif";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      setBusy(true);
+      try {
+        const { asset } = await api.uploadImage(file);
+        onChange({ ...(logo ?? { asset }), [key]: asset });
+      } catch (err) {
+        toast(err instanceof Error ? err.message : "Não foi possível enviar a imagem.", "error");
+      } finally {
+        setBusy(false);
+      }
+    };
+    input.click();
+  };
+  if (!logo)
+    return (
+      <Field
+        label="Logo"
+        group
+        hint="PNG ou WebP com fundo transparente. Aparece no canto de todos os slides."
+      >
+        <button type="button" disabled={busy} onClick={() => pick("asset")}>
+          {busy ? "Enviando…" : "Enviar logo"}
+        </button>
+      </Field>
+    );
+  const set = (patch: Record<string, string | undefined>) => {
+    const next: Record<string, unknown> = { ...logo, ...patch };
+    for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
+    onChange(next as BrandLogo);
+  };
+  return (
+    <Field label="Logo" group>
+      <div className="logo-pair">
+        <button type="button" className="logo-slot" disabled={busy} onClick={() => pick("asset")}>
+          <img src={resolveAsset(logo.asset)} alt="" />
+          <span>Fundo claro</span>
+        </button>
+        <button
+          type="button"
+          className="logo-slot dark"
+          disabled={busy}
+          onClick={() => pick("assetOnDark")}
+        >
+          {logo.assetOnDark ? <img src={resolveAsset(logo.assetOnDark)} alt="" /> : <em>+</em>}
+          <span>Fundo escuro</span>
+        </button>
+      </div>
+      <div className="row">
+        <Select
+          value={logo.position ?? "bottom-right"}
+          options={LOGO_POSITIONS.map((p) => ({ value: p, label: LOGO_POSITION_LABELS[p] }))}
+          onChange={(v) => set({ position: v })}
+        />
+        <Select
+          value={logo.size ?? "m"}
+          options={[
+            { value: "s", label: "Pequeno" },
+            { value: "m", label: "Médio" },
+            { value: "l", label: "Grande" },
+          ]}
+          onChange={(v) => set({ size: v })}
+        />
+      </div>
+      <TextInput
+        value={logo.alt ?? ""}
+        maxLength={200}
+        placeholder="Texto alternativo (nome da empresa)"
+        onCommit={(v) => set({ alt: v.trim() || undefined })}
+      />
+      <div className="row">
+        {logo.assetOnDark && (
+          <button type="button" onClick={() => set({ assetOnDark: undefined })}>
+            Remover versão escura
+          </button>
+        )}
+        <button type="button" onClick={() => onChange(null)}>
+          Remover logo
+        </button>
+      </div>
+    </Field>
   );
 }

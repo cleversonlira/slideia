@@ -9,6 +9,8 @@ import {
   THEME_IDS,
   TRANSITION_TYPES,
   formatIssues,
+  imageRefs,
+  mapImageRefs,
   type DesignWarning,
   type Presentation,
 } from "@slideia/core";
@@ -191,33 +193,20 @@ export function createMcpServer(
 
   /** Data for the chat widget: images as signed URLs (or inlined locally), fonts and icons. */
   const viewPayload = async (p: Presentation): Promise<Record<string, unknown>> => {
-    const cache = new Map<string, string>();
-    const src = async (ref: string): Promise<string> => {
-      if (!ref.startsWith("asset:")) return ref;
-      const id = ref.slice(6);
-      const hit = cache.get(id);
-      if (hit) return hit;
-      let out = "";
-      if (service.links.asset) out = service.links.asset(id);
-      else {
-        const a = await service.repo.getAsset(id);
-        if (a) out = `data:${a.mime};base64,${Buffer.from(a.data).toString("base64")}`;
+    const resolved = new Map<string, string>();
+    for (const ref of imageRefs(p)) {
+      let out = ref;
+      if (ref.startsWith("asset:")) {
+        const id = ref.slice(6);
+        if (service.links.asset) out = service.links.asset(id);
+        else {
+          const a = await service.repo.getAsset(id);
+          out = a ? `data:${a.mime};base64,${Buffer.from(a.data).toString("base64")}` : "";
+        }
       }
-      cache.set(id, out);
-      return out;
-    };
-    const slides = [];
-    for (const sl of p.slides) {
-      const elements = [];
-      for (const e of sl.elements)
-        elements.push(e.type === "image" ? { ...e, asset: await src(e.asset) } : e);
-      const background =
-        sl.background?.type === "image"
-          ? { ...sl.background, asset: await src(sl.background.asset) }
-          : sl.background;
-      slides.push(background ? { ...sl, elements, background } : { ...sl, elements });
+      resolved.set(ref, out);
     }
-    const presentation = { ...p, slides };
+    const presentation = mapImageRefs(p, (ref) => resolved.get(ref) ?? ref);
     return {
       [VIEW_KEY]: {
         presentation,

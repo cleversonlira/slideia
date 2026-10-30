@@ -7,7 +7,11 @@ import {
   checkDesign,
   contrastRatio,
   diffToOps,
+  imageRefs,
+  mapImageRefs,
   normalizePresentation,
+  resolveTheme,
+  slideTone,
   stripUndefined,
   THEMES,
   type Presentation,
@@ -417,5 +421,79 @@ describe("themes", () => {
         expect(contrastRatio(fg, bg), `${t.id} ${name}`).toBeGreaterThanOrEqual(min);
       }
     }
+  });
+});
+
+describe("brand overrides", () => {
+  const branded = () =>
+    normalizePresentation({
+      meta: {
+        title: "Marca",
+        theme: "executivo",
+        themeOverrides: {
+          accent: "#0057b8",
+          accent2: "#f5a800",
+          cover: "#00263e",
+          logo: { asset: "asset:logo", assetOnDark: "asset:logo-w", alt: "ACME" },
+        },
+      },
+      slides: [
+        { layout: "cover", elements: [{ type: "title", text: "Capa" }] },
+        {
+          layout: "title-content",
+          elements: [{ type: "title", text: "T" }],
+          background: { type: "image", asset: "asset:bg" },
+        },
+        {
+          layout: "image-text",
+          elements: [
+            { type: "image", asset: "asset:bg", alt: "x" },
+            { type: "title", text: "T" },
+          ],
+        },
+      ],
+    });
+
+  it("applies brand colors and keeps the inverse accent readable", () => {
+    const t = resolveTheme(branded().meta);
+    expect(t.colors.accent).toBe("#0057b8");
+    expect(t.colors.accent2).toBe("#f5a800");
+    expect(t.colors.chart.slice(0, 2)).toEqual(["#0057b8", "#f5a800"]);
+    expect(t.emphasis).toEqual({ type: "color", color: "#00263e" });
+    expect(t.colors.inverseBg).toBe("#00263e");
+    expect(contrastRatio(t.colors.inverseAccent, t.colors.inverseBg)).toBeGreaterThanOrEqual(3);
+    expect(slideTone(branded().slides[0]!, t)).toBe("inverse");
+  });
+
+  it("walks every image reference, logo included", () => {
+    const p = branded();
+    expect(imageRefs(p).sort()).toEqual(["asset:bg", "asset:logo", "asset:logo-w"]);
+    const q = mapImageRefs(p, (r) => r.toUpperCase());
+    expect(q.meta.themeOverrides?.logo).toMatchObject({ asset: "ASSET:LOGO", alt: "ACME" });
+    expect(q.slides[1]!.background).toMatchObject({ asset: "ASSET:BG" });
+    expect(q.slides[2]!.elements[0]).toMatchObject({ asset: "ASSET:BG" });
+    expect(p.meta.themeOverrides?.logo?.asset).toBe("asset:logo");
+    expect(mapImageRefs("not a deck", (r) => r)).toBe("not a deck");
+  });
+
+  it("validates the logo and accepts brand edits", () => {
+    expect(() =>
+      normalizePresentation({
+        meta: { title: "x", themeOverrides: { logo: { asset: "logo.svg" } } },
+        slides: [{ layout: "cover", elements: [{ type: "title", text: "x" }] }],
+      }),
+    ).toThrow(PresentationError);
+    const r = applyOps(branded(), [
+      {
+        op: "update_presentation",
+        patch: {
+          themeOverrides: { cover: "#123456", logo: { asset: "asset:n", position: "top-left" } },
+        },
+      },
+    ]);
+    expect(r.presentation.meta.themeOverrides).toEqual({
+      cover: "#123456",
+      logo: { asset: "asset:n", position: "top-left" },
+    });
   });
 });

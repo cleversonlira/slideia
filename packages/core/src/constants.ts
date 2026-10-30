@@ -81,3 +81,6 @@ export const ELEMENT_TYPES = [
 export type ElementType = (typeof ELEMENT_TYPES)[number];
 
 export const CURRENT_SCHEMA_VERSION = 1;
+
+/** Corners where the brand logo (meta.themeOverrides.logo) can sit. */
+export const LOGO_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right"] as const;
