@@ -90,8 +90,13 @@ export async function startRemote(
     server,
     url,
     async close() {
-      await new Promise<void>((r) => server.close(() => r()));
-      server.closeAllConnections?.();
+      // close() waits for open connections (keep-alive, MCP SSE streams): drop idle ones now and
+      // give in-flight requests 2 s before cutting the rest.
+      const closed = new Promise<void>((r) => server.close(() => r()));
+      server.closeIdleConnections();
+      const force = setTimeout(() => server.closeAllConnections(), 2000);
+      await closed;
+      clearTimeout(force);
       await ctx.previewer.close();
       await sql.close();
     },

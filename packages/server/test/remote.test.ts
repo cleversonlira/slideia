@@ -291,6 +291,25 @@ describe("OAuth + MCP with the official SDK client", () => {
     client = await connectWithOAuth(provider);
   }, 60_000);
 
+  it("GET /mcp asks for a token, then opens an idle SSE stream", async () => {
+    const anon = await fetch(`${base}/mcp`, { headers: { accept: "text/event-stream" } });
+    expect(anon.status).toBe(401);
+    expect(anon.headers.get("www-authenticate")).toContain("resource_metadata=");
+    const ctrl = new AbortController();
+    const res = await fetch(`${base}/mcp`, {
+      headers: {
+        accept: "text/event-stream",
+        authorization: `Bearer ${provider.saved!.access_token}`,
+      },
+      signal: ctrl.signal,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    const first = await res.body!.getReader().read();
+    expect(new TextDecoder().decode(first.value)).toContain(": slideia");
+    ctrl.abort();
+  });
+
   it("registered dynamically and got tokens for the MCP resource", () => {
     expect(String(provider.info!.client_id)).toMatch(/^c_/);
     const payload = JSON.parse(

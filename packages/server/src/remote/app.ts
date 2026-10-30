@@ -925,8 +925,8 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   const challenge = (error?: string) =>
     `Bearer realm="mcp", resource_metadata="${config.publicUrl}/.well-known/oauth-protected-resource/mcp", scope="presentations:read presentations:write"${error ? `, error="${error}"` : ""}`;
 
-  app.use("/mcp", cors);
-  app.post("/mcp", express.json({ limit: "25mb" }), async (req, res) => {
+  /** Bearer token of an MCP request; answers 401/403 itself and returns null when not allowed. */
+  const mcpAccess = async (req: Request, res: Response) => {
     const header = req.headers.authorization ?? "";
     const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
     const access = token ? await oauth.verifyAccess(token) : null;
@@ -937,15 +937,44 @@ export function createRemoteApp(ctx: RemoteContext): Express {
         error: { code: -32001, message: "Authentication required" },
         id: null,
       });
-      return;
+      return null;
     }
     if (!access.scopes.includes("presentations:read")) {
       res.setHeader("WWW-Authenticate", challenge("insufficient_scope"));
       res
         .status(403)
         .json({ jsonrpc: "2.0", error: { code: -32001, message: "Insufficient scope" }, id: null });
-      return;
+      return null;
     }
+    return access;
+  };
+
+  app.use("/mcp", cors);
+
+  // Optional server→client SSE stream (Streamable HTTP GET). This stateless server never sends
+  // anything on it, but some clients (Gemini) open it before using the tools and give up on a
+  // 405, so it answers with an idle stream: a heartbeat comment, closed after 10 minutes.
+  app.get("/mcp", async (req, res) => {
+    const access = await mcpAccess(req, res);
+    if (!access) return;
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    res.write(": slideia\n\n");
+    const beat = setInterval(() => res.write(": ping\n\n"), 25_000);
+    const end = setTimeout(() => res.end(), 10 * 60_000);
+    res.on("close", () => {
+      clearInterval(beat);
+      clearTimeout(end);
+    });
+  });
+
+  app.post("/mcp", express.json({ limit: "25mb" }), async (req, res) => {
+    const access = await mcpAccess(req, res);
+    if (!access) return;
     if (!limiter.hit(`mcp:${access.userId}`, 120, 60_000)) {
       res.status(429).json({
         jsonrpc: "2.0",
@@ -987,7 +1016,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     }
   });
   app.all("/mcp", (_req, res) => {
-    res.setHeader("Allow", "POST, OPTIONS");
+    res.setHeader("Allow", "GET, POST, OPTIONS");
     res.status(405).json({
       jsonrpc: "2.0",
       error: { code: -32000, message: "Method not allowed (stateless server: use POST)." },
