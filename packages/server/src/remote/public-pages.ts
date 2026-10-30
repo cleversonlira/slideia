@@ -81,6 +81,7 @@ export function connectPage(ctx: PageContext, p: PublicInfo): string {
 <h2>Depois de conectar</h2>
 <ul><li>A IA devolve dois links: o do <strong>editor</strong> (exige login) e o de <strong>download</strong> do HTML, que vale por ${p.linkTtlHours} horas.</li>
 <li>Para apresentar, abra o HTML e pressione <strong>F5</strong>; <strong>S</strong> abre a visão do apresentador e <strong>T</strong> testa o passador.</li>
+<li>No Claude e no ChatGPT os slides aparecem num carrossel dentro da conversa, com botões para abrir no editor, apresentar e baixar.</li>
 <li>Você pode desconectar uma IA a qualquer momento em <a href="/conta">Minha conta</a>.</li></ul>
 <p class="muted">Algo não funcionou? Veja o <a href="/suporte">suporte</a>.</p></div>`,
     { wide: true },
@@ -234,6 +235,9 @@ export function supportPage(ctx: PageContext, p: PublicInfo): string {
 <li>Comece uma conversa nova depois de conectar.</li>
 <li>No <strong>Gemini</strong>, use a interface e o pedido em inglês e selecione o ${name} digitando <code>@</code>.</li>
 <li>Seja explícito: <em>“use o ${name} para criar…”</em>.</li></ul>
+
+<h3>Não aparece o carrossel com os slides na conversa</h3>
+<p>O Claude e o ChatGPT mostram os slides dentro da conversa. Eles guardam a lista de recursos do ${name} de quando você conectou; depois de uma atualização do ${name}, <strong>desconecte e conecte de novo</strong> nas configurações da IA (ou use “Atualizar”, se houver) e abra uma conversa nova. Quem não reconecta continua usando tudo normalmente, só sem a novidade. O Gemini ainda não mostra o carrossel.</p>
 
 <h3>O link de download não abre mais</h3>
 <p>Os links de download e de apresentação valem por ${p.linkTtlHours} horas. Peça um novo link à IA ou abra a apresentação no <a href="/">editor</a> e use <strong>Baixar</strong>.</p>
