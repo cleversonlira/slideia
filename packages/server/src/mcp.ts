@@ -11,13 +11,31 @@ import {
   TRANSITION_TYPES,
   formatIssues,
   type DesignWarning,
+  type Presentation,
 } from "@slideia/core";
+import { buildWidgetHtml, widgetAssets } from "@slideia/renderer/node";
 import { DESIGN_RULES, buildGuide } from "./guide.js";
 import { PreviewUnavailableError, type Previewer } from "./preview.js";
 import { ConflictError, LimitError, NotFoundError, type PresentationService } from "./service.js";
 import { ImageError } from "./images.js";
 
 const VERSION = "0.1.0";
+
+/** MCP Apps view shown in the chat (bump the version when the HTML changes: hosts cache it). */
+export const VIEW_URI = "ui://slideia/viewer-v1.html";
+export const VIEW_MIME = "text/html;profile=mcp-app";
+/** Tool result `_meta` key with the data the widget draws (widget-only, not for the model). */
+export const VIEW_KEY = "slideia/view";
+
+/** Tool `_meta` linking it to the view (MCP Apps key + the ChatGPT alias and status texts). */
+function viewToolMeta(invoking: string, invoked: string): Record<string, unknown> {
+  return {
+    ui: { resourceUri: VIEW_URI },
+    "openai/outputTemplate": VIEW_URI,
+    "openai/toolInvocation/invoking": invoking,
+    "openai/toolInvocation/invoked": invoked,
+  };
+}
 
 // Compact input schemas: enough structure for the model, details in get_guide. The server
 // validates everything again and answers with field paths + how to fix.
@@ -154,6 +172,51 @@ export function createMcpServer(
     },
   );
 
+  /** Base URL of this server (fonts, images and links the widget loads). */
+  const origin = new URL(service.links.editor("x")).origin;
+
+  /** Data for the chat widget: images as signed URLs (or inlined locally), fonts and icons. */
+  const viewPayload = async (p: Presentation): Promise<Record<string, unknown>> => {
+    const cache = new Map<string, string>();
+    const src = async (ref: string): Promise<string> => {
+      if (!ref.startsWith("asset:")) return ref;
+      const id = ref.slice(6);
+      const hit = cache.get(id);
+      if (hit) return hit;
+      let out = "";
+      if (service.links.asset) out = service.links.asset(id);
+      else {
+        const a = await service.repo.getAsset(id);
+        if (a) out = `data:${a.mime};base64,${Buffer.from(a.data).toString("base64")}`;
+      }
+      cache.set(id, out);
+      return out;
+    };
+    const slides = [];
+    for (const sl of p.slides) {
+      const elements = [];
+      for (const e of sl.elements)
+        elements.push(e.type === "image" ? { ...e, asset: await src(e.asset) } : e);
+      const background =
+        sl.background?.type === "image"
+          ? { ...sl.background, asset: await src(sl.background.asset) }
+          : sl.background;
+      slides.push(background ? { ...sl, elements, background } : { ...sl, elements });
+    }
+    const presentation = { ...p, slides };
+    return {
+      [VIEW_KEY]: {
+        presentation,
+        ...widgetAssets(presentation, origin),
+        links: {
+          editor: service.links.editor(p.id),
+          present: service.links.present(p.id),
+          download: service.links.download(p.id),
+        },
+      },
+    };
+  };
+
   // Every tool goes through this wrapper: scope check and timing.
   const register = server.registerTool.bind(server) as (
     name: string,
@@ -197,6 +260,7 @@ export function createMcpServer(
       description:
         "Creates a new presentation from JSON (see get_guide; text fields accept Markdown, ids are optional). Image URLs are downloaded and stored. Returns the id, version, design warnings and links to the editor and the downloadable HTML.",
       inputSchema: { presentation: PresentationIn },
+      _meta: viewToolMeta("Criando a apresentação…", "Apresentação criada"),
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -231,6 +295,7 @@ export function createMcpServer(
             },
           ],
           structuredContent: result,
+          _meta: await viewPayload(p),
         };
       }),
   );
@@ -295,6 +360,7 @@ export function createMcpServer(
         expectedVersion: z.number().int().min(1),
         operations: z.array(OperationIn).min(1).max(100),
       },
+      _meta: viewToolMeta("Editando a apresentação…", "Apresentação atualizada"),
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -322,6 +388,7 @@ export function createMcpServer(
             rebased: r.rebased,
             summary: r.summary,
           },
+          _meta: await viewPayload(r.presentation),
         };
       }),
   );
@@ -450,16 +517,18 @@ export function createMcpServer(
       description:
         "Returns the link to the visual editor (optionally at a slide) and the link to present.",
       inputSchema: { id: z.string(), slideNumber: z.number().int().min(1).optional() },
+      _meta: viewToolMeta("Abrindo a apresentação…", "Apresentação aberta"),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     ({ id, slideNumber }) =>
       safely(async () => {
-        await service.get(id);
+        const p = await service.get(id);
         const editorUrl = service.links.editor(id, slideNumber);
         const presentUrl = service.links.present(id);
         return {
           content: [{ type: "text", text: `Editor: ${editorUrl}\nPresent: ${presentUrl}` }],
           structuredContent: { editorUrl, presentUrl },
+          _meta: await viewPayload(p),
         };
       }),
   );
@@ -530,6 +599,36 @@ ${documento}`,
   // -------------------------------------------------------------------------
   // Resources
   // -------------------------------------------------------------------------
+
+  server.registerResource(
+    "viewer",
+    VIEW_URI,
+    {
+      title: "SlideIA viewer",
+      description: "Interactive slide carousel shown in the chat after creating or editing a deck.",
+      mimeType: VIEW_MIME,
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: VIEW_MIME,
+          text: await buildWidgetHtml(),
+          _meta: {
+            ui: {
+              // Fonts and images come from this server; the widget makes no other requests.
+              csp: { resourceDomains: [origin], connectDomains: [] },
+              prefersBorder: true,
+            },
+            "openai/widgetDescription":
+              "Carrossel com os slides da apresentação e botões para abrir no editor, apresentar e baixar.",
+            "openai/widgetPrefersBorder": true,
+            "openai/widgetCSP": { resource_domains: [origin], connect_domains: [] },
+          },
+        },
+      ],
+    }),
+  );
 
   server.registerResource(
     "presentation-schema",

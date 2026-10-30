@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { PresentationError, formatIssues } from "@slideia/core";
+import { allFontFiles } from "@slideia/renderer/node";
 import { ImageError } from "./images.js";
 import {
   ConflictError,
@@ -341,6 +342,20 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
   );
 
   app.use("/api", api);
+
+  // Theme fonts (OFL), public: the chat widget loads them from another origin.
+  const fontFiles = new Map(allFontFiles().map((f) => [f.name, f.path]));
+  app.get("/fonts/:file", (req, res) => {
+    const path = fontFiles.get(String(req.params.file));
+    if (!path) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    // Paths come from the font list, never from the request; in dev they live under node_modules/.pnpm.
+    res.type("font/woff2").sendFile(path, { dotfiles: "allow" });
+  });
 
   app.get(
     "/media/:id",

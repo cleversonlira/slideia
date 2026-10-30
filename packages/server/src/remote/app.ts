@@ -121,9 +121,12 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     log("login", { user: anon(user.id) });
   };
 
+  /** Images shown by the chat widget stay in the conversation, so their links last longer. */
+  const MEDIA_LINK_TTL = 30 * 24 * 3600;
+
   const linksFor = (owner: string): Links => {
-    const signed = (kind: "d" | "v", id: string) => {
-      const exp = Math.floor(Date.now() / 1000) + config.linkTtl;
+    const signed = (kind: "d" | "v" | "m", id: string, ttl = config.linkTtl) => {
+      const exp = Math.floor(Date.now() / 1000) + ttl;
       const sig = hmac(ctx.signingKey, `${kind}:${owner}:${id}:${exp}`);
       return `${config.publicUrl}/${kind}/${id}?o=${encodeURIComponent(owner)}&e=${exp}&s=${sig}`;
     };
@@ -131,6 +134,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       editor: (id, slide) => `${config.publicUrl}/p/${id}${slide ? `?slide=${slide}` : ""}`,
       download: (id) => signed("d", id),
       present: (id) => signed("v", id),
+      asset: (id) => signed("m", id, MEDIA_LINK_TTL),
     };
   };
 
@@ -913,6 +917,26 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   };
   app.get("/d/:id", signedLink("d"));
   app.get("/v/:id", signedLink("v"));
+
+  // Images of a presentation for the chat widget (signed per owner and asset).
+  app.get("/m/:id", async (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const o = String(req.query.o ?? "");
+    const e = Number(req.query.e ?? 0);
+    const s = String(req.query.s ?? "");
+    if (!o || !e || e < Date.now() / 1000 || !verifyHmac(ctx.signingKey, `m:${o}:${id}:${e}`, s)) {
+      res.status(403).type("text").send("Link expirado.");
+      return;
+    }
+    const a = await serviceFor(o).repo.getAsset(id);
+    if (!a) {
+      res.status(404).type("text").send("Imagem não encontrada.");
+      return;
+    }
+    res.setHeader("Content-Type", a.mime);
+    res.setHeader("Cache-Control", "private, max-age=2592000, immutable");
+    res.send(Buffer.from(a.data));
+  });
 
   // ---------------------------------------------------------------------------
   // MCP endpoint (Streamable HTTP, stateless, OAuth bearer tokens)

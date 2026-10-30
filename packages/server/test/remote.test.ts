@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { createHash, randomBytes } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import http from "node:http";
@@ -320,6 +321,45 @@ describe("OAuth + MCP with the official SDK client", () => {
       aud: `${base}/mcp`,
       scope: "presentations:read presentations:write",
     });
+  });
+
+  it("gives the chat widget signed image links scoped to the owner", async () => {
+    const png = await sharp({ create: { width: 8, height: 6, channels: 3, background: "#00a" } })
+      .png()
+      .toBuffer();
+    const r = (await client.callTool({
+      name: "create_presentation",
+      arguments: {
+        presentation: {
+          meta: { title: "Widget remoto" },
+          slides: [
+            {
+              layout: "full-image",
+              elements: [
+                {
+                  type: "image",
+                  asset: `data:image/png;base64,${png.toString("base64")}`,
+                  alt: "x",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })) as ToolResult & { _meta?: Record<string, unknown> };
+    const view = r._meta?.["slideia/view"] as {
+      presentation: { slides: Array<{ elements: Array<{ asset?: string }> }> };
+      fontCss: string;
+    };
+    const src = view.presentation.slides[0]!.elements[0]!.asset!;
+    expect(src).toMatch(new RegExp(`^${base}/m/a_[^?]+\\?o=`));
+    const img = await fetch(src);
+    expect(img.status).toBe(200);
+    expect(img.headers.get("content-type")).toMatch(/^image\//);
+    expect((await fetch(src.replace(/s=[^&]+/, "s=abc"))).status).toBe(403);
+    // The signature binds the owner: someone else's id with the same signature is refused.
+    expect((await fetch(src.replace(/o=[^&]+/, "o=u_outro"))).status).toBe(403);
+    expect(view.fontCss).toContain(`${base}/fonts/`);
   });
 
   it("creates a presentation and returns working signed links", async () => {

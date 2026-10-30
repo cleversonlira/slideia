@@ -63,6 +63,7 @@ writeFileSync(
 );
 
 cpSync(`${repo}packages/renderer/dist/player.js`, `${dist}player.js`);
+cpSync(`${repo}packages/renderer/dist/widget.js`, `${dist}widget.js`);
 for (const f of allFontFiles()) cpSync(f.path, `${dist}fonts/${f.name}`);
 const editor = `${repo}packages/editor/dist`;
 if (existsSync(editor))

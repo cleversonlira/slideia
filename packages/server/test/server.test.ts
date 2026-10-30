@@ -16,6 +16,7 @@ import {
   type Runtime,
 } from "../src/index.js";
 import { fetchPublic } from "../src/images.js";
+import { VIEW_KEY, VIEW_URI } from "../src/mcp.js";
 
 const example = JSON.parse(
   readFileSync(join(import.meta.dirname, "../../../assets/examples/relatorio-q3.json"), "utf8"),
@@ -272,6 +273,81 @@ describe("SSRF protection", () => {
     } finally {
       srv.close();
     }
+  });
+});
+
+describe("chat widget (MCP Apps)", () => {
+  type Meta = Record<string, unknown>;
+
+  it("links the render tools to the ui:// view", async () => {
+    const { tools } = await client.listTools();
+    const withView = tools
+      .filter((t) => (t._meta as { ui?: { resourceUri?: string } } | undefined)?.ui?.resourceUri)
+      .map((t) => t.name)
+      .sort();
+    expect(withView).toEqual(["apply_edits", "create_presentation", "open_editor"]);
+    for (const t of tools.filter((x) => withView.includes(x.name))) {
+      expect((t._meta as Meta).ui).toEqual({ resourceUri: VIEW_URI });
+      expect((t._meta as Meta)["openai/outputTemplate"]).toBe(VIEW_URI);
+    }
+  });
+
+  it("serves the view as text/html;profile=mcp-app with a CSP for this server", async () => {
+    const r = await client.readResource({ uri: VIEW_URI });
+    const c = r.contents[0] as { mimeType: string; text: string; _meta: Meta };
+    expect(c.mimeType).toBe("text/html;profile=mcp-app");
+    expect(c.text).toContain('<div id="app"></div>');
+    expect(c.text).toMatch(/<script>[\s\S]{20000,}<\/script>/);
+    const ui = c._meta.ui as { csp: { resourceDomains: string[]; connectDomains: string[] } };
+    expect(ui.csp.resourceDomains).toEqual([new URL(rt.base()).origin]);
+    expect(ui.csp.connectDomains).toEqual([]);
+  });
+
+  it("attaches the deck, fonts, icons and links to the tool result _meta", async () => {
+    const png = await sharp({ create: { width: 8, height: 6, channels: 3, background: "#0a0" } })
+      .png()
+      .toBuffer();
+    const r = (await client.callTool({
+      name: "create_presentation",
+      arguments: {
+        presentation: {
+          meta: { title: "Widget", theme: "tech" },
+          slides: [
+            {
+              layout: "image-text",
+              elements: [
+                {
+                  type: "image",
+                  asset: `data:image/png;base64,${png.toString("base64")}`,
+                  alt: "x",
+                },
+                { type: "title", text: "Com imagem" },
+                { type: "stat", value: "42", label: "a", icon: "rocket" },
+              ],
+            },
+          ],
+        },
+      },
+    })) as { _meta?: Meta; structuredContent?: Meta };
+    const view = r._meta?.[VIEW_KEY] as {
+      presentation: { slides: Array<{ elements: Array<{ type: string; asset?: string }> }> };
+      fontCss: string;
+      icons: Record<string, string>;
+      links: Record<string, string>;
+    };
+    const image = view.presentation.slides[0]!.elements.find((e) => e.type === "image")!;
+    // Local mode has no signed media links: images are inlined.
+    expect(image.asset).toMatch(/^data:image\/[a-z]+;base64,/);
+    expect(view.fontCss).toContain(`${new URL(rt.base()).origin}/fonts/`);
+    expect(Object.keys(view.icons)).toContain("rocket");
+    expect(view.links.editor).toBe(r.structuredContent!.editorUrl);
+
+    const font = /url\(([^)]+)\)/.exec(view.fontCss)![1]!;
+    const res = await fetch(font);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("content-type")).toContain("font/woff2");
+    expect((await fetch(`${rt.base()}/fonts/../../etc/passwd`)).status).toBe(404);
   });
 });
 

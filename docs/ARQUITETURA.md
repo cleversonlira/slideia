@@ -585,3 +585,23 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
   editor exige login na mesma conta.
 - **Rate limiting em memória** (instância única) — trocar por armazenamento compartilhado ao escalar.
 - **Páginas públicas** com texto provisório (Fase 4 traz as versões completas).
+
+## 20. O que mudou na implementação (Fase 4 — widget no chat)
+
+- **MCP Apps (SEP-1865, spec 2026-01-26)**, suportado por Claude e ChatGPT: resource
+  `ui://slideia/viewer-v1.html` (`text/html;profile=mcp-app`), ligado a `create_presentation`,
+  `apply_edits` e `open_editor` por `_meta.ui.resourceUri` (+ alias `openai/outputTemplate` e
+  textos `openai/toolInvocation/*`). Mudou o HTML de forma incompatível → nova versão no URI
+  (os hosts usam o URI como chave de cache).
+- **Bundle em `packages/renderer/src/widget`** (não no editor): ponte JSON-RPC própria
+  (`ui/initialize` → `ui/notifications/initialized` → `tool-result`; `ui/open-link`,
+  `ui/request-display-mode`, `ui/notifications/size-changed`), sem dependências, ~54 KB.
+  Usa o mesmo `renderSlide`/`deckCss`/`autofit` do player; slides inativos com
+  `visibility:hidden` para o autofit medir todos.
+- **Dados no `_meta["slideia/view"]` do resultado** (vão só para o widget, não para o modelo):
+  a apresentação com imagens trocadas por URLs, `@font-face` com URLs e os ícones usados.
+- **CSP**: `resourceDomains` = origem do servidor; nada de `connect`. Fontes em `GET /fonts/:file`
+  (públicas, CORS `*`); imagens em `GET /m/:id` com HMAC por dono+imagem, validade 30 dias
+  (o widget fica no histórico). No modo local (sem links assinados) as imagens vão inline.
+- Fallback para o Apps SDK legado: `window.openai.toolResponseMetadata` e `openExternal`.
+

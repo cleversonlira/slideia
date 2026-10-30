@@ -10,10 +10,11 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
 - Fase 2 (servidor MCP local stdio + editor visual): **concluída**.
 - Fase 3 (servidor remoto: MCP HTTP + OAuth 2.1 + contas + Postgres/S3), simulado localmente: **concluída**
   (detalhes em `docs/REMOTO.md`).
-- Fase 4 (UI no chat, páginas públicas, material de submissão, `.mcpb`): pendente.
+- Fase 4: páginas públicas e **widget no chat (MCP Apps)** feitos; material de submissão e `.mcpb`
+  pendentes.
 - Produção: **https://slideia.site** (MCP em `/mcp`) numa VPS própria, via `deploy/vps/` (Docker
-  Compose + Postgres atrás do nginx do host, TLS pelo certbot, backup diário). E-mail ainda em
-  `MAIL_DRIVER=console`.
+  Compose + Postgres atrás do nginx do host, TLS pelo certbot, backup diário). E-mail por SMTP da
+  Hostinger (`suporte@slideia.site`, `deploy/vps/set-smtp.sh`).
 
 ## Pacotes
 
@@ -23,7 +24,8 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
     de navegador (player, canvas do editor). Constantes ficam em `constants.ts` (sem Zod) por isso.
 - `packages/renderer` — `Presentation → HTML` (funções puras, sem framework), CSS de temas e
   layouts, autofit, parser DOM → texto rico, player standalone (`src/player`), export autocontido
-  e CLI (`src/node`, só Node).
+  e CLI (`src/node`, só Node). `src/widget` é a view MCP Apps do chat (carrossel; bundle
+  `dist/widget.js`, HTML montado por `buildWidgetHtml` em `src/node/widget.ts`).
 - `packages/server` — serviço (`service.ts`: criar, `apply` com rebase/conflito, histórico,
   imagens, `get_changes`), armazenamento SQLite (`node:sqlite`, WAL, vários processos), MCP
   (`mcp.ts`, 10 tools + prompts + resources), API HTTP do editor (`http.ts`: token → cookie,
