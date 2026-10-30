@@ -15,6 +15,7 @@ import {
   startRuntime,
   type Runtime,
 } from "../src/index.js";
+import { fetchPublic } from "../src/images.js";
 
 const example = JSON.parse(
   readFileSync(join(import.meta.dirname, "../../../assets/examples/relatorio-q3.json"), "utf8"),
@@ -210,6 +211,24 @@ describe("SSRF protection", () => {
     await expect(fetchImage("http://[::1]/x.png", 1000)).rejects.toThrow(/private or local/);
     await expect(fetchImage("http://example.com:8080/x.png", 1000)).rejects.toThrow(/ports/);
     await expect(fetchImage("file:///etc/passwd", 1000)).rejects.toThrow(/http/);
+  });
+
+  it("downloads from a hostname (pinned DNS answers Node's `all` lookups)", async () => {
+    // IP literals skip DNS; a hostname goes through the pinned lookup, which Node calls with
+    // { all: true } (autoSelectFamily). Regression: that path failed for every real host.
+    const srv = http.createServer((_req, res) => res.end("ok"));
+    await new Promise<void>((r) => srv.listen(0, "127.0.0.1", () => r()));
+    try {
+      const port = (srv.address() as { port: number }).port;
+      const r = await fetchPublic(`http://localhost:${port}/doc`, {
+        maxBytes: 1000,
+        accept: "*/*",
+        allowPrivate: true,
+      });
+      expect(Buffer.from(r.data).toString()).toBe("ok");
+    } finally {
+      srv.close();
+    }
   });
 });
 

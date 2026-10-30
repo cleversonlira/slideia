@@ -166,7 +166,15 @@ export async function fetchPublic(
     const req = client.get(
       target,
       {
-        lookup: (_host, _o, cb) => cb(null, address, family),
+        // Pins the validated address. Node asks for `all` addresses (autoSelectFamily, the default
+        // since Node 20) and then expects an array; answering a single address breaks every
+        // hostname that is not an IP literal ("Invalid IP address: undefined").
+        lookup: (_host, o, cb) =>
+          o.all
+            ? (cb as unknown as (e: null, a: { address: string; family: number }[]) => void)(null, [
+                { address, family },
+              ])
+            : cb(null, address, family),
         headers: { "user-agent": "Apresenta/0.1", accept: opts.accept },
         timeout: opts.timeoutMs ?? 10_000,
       },
