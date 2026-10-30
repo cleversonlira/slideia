@@ -56,7 +56,11 @@ DEMO_PASSWORD=$(openssl rand -base64 18 | tr -d '\n/+=')
 ENV
   echo "[deploy] .env criado em $REMOTE/.env (segredos gerados no servidor)"
 fi
-docker compose up -d --build
+docker compose build app
+# `up --build` does not always recreate a container whose config is unchanged; force the app
+# onto the new image (the database keeps running).
+docker compose up -d db
+docker compose up -d --no-deps --force-recreate app
 docker image prune -f >/dev/null
 for _ in $(seq 1 60); do
   curl -fsS http://127.0.0.1:8787/healthz >/dev/null 2>&1 && { echo "[deploy] servidor saudável"; exit 0; }
