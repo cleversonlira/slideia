@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+out
+test-results
+playwright-report
+data
+.env
+.git
+ppts
+assets/examples/*.html
+deploy

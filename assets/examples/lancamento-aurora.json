@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "title": "Lançamento Aurora",
+    "author": "Equipe de Produto",
+    "lang": "pt-BR",
+    "aspectRatio": "16:9",
+    "theme": "executivo",
+    "defaultTransition": { "type": "fade", "durationMs": 500 }
+  },
+  "slides": [
+    {
+      "layout": "cover",
+      "elements": [
+        { "type": "title", "text": "Aurora: a nova plataforma de atendimento" },
+        { "type": "text", "text": "Plano de lançamento · Outubro de 2026" },
+        {
+          "type": "image",
+          "asset": "asset:aurora",
+          "alt": "Gradiente abstrato em tons de azul e violeta",
+          "kenBurns": true
+        }
+      ],
+      "notes": "Boas-vindas. Em 20 minutos vamos mostrar **por que** a Aurora existe, o que ela entrega e como será o lançamento."
+    },
+    {
+      "layout": "title-content",
+      "elements": [
+        { "type": "title", "text": "O problema que resolvemos" },
+        {
+          "type": "text",
+          "text": "- Clientes esperam **4 horas** em média por uma resposta\n- Atendentes alternam entre *seis* sistemas diferentes\n- 38% dos chamados são perguntas repetidas\n- Ninguém tem uma visão única do cliente",
+          "animation": { "type": "rise", "by": "paragraph" }
+        }
+      ],
+      "notes": "Revele um item por clique. Pause no número de 4 horas: é o que mais dói para o cliente."
+    },
+    {
+      "layout": "stats",
+      "elements": [
+        { "type": "title", "text": "Resultados do piloto (90 dias)" },
+        {
+          "type": "stat",
+          "value": "-62%",
+          "label": "tempo médio de resposta",
+          "icon": "timer",
+          "trend": "down"
+        },
+        {
+          "type": "stat",
+          "value": "+27",
+          "label": "pontos de NPS",
+          "icon": "smile",
+          "trend": "up"
+        },
+        {
+          "type": "stat",
+          "value": "3,1x",
+          "label": "chamados resolvidos por atendente",
+          "icon": "zap",
+          "trend": "up"
+        },
+        { "type": "text", "text": "Piloto com 3 clientes e 140 atendentes, jun–ago/2026." }
+      ],
+      "transition": { "type": "zoom" },
+      "notes": "Estes são os três números para guardar. O NPS saiu de 31 para 58."
+    },
+    {
+      "layout": "section",
+      "elements": [
+        { "type": "title", "text": "O produto" },
+        { "type": "text", "text": "O que a Aurora entrega no primeiro dia" },
+        { "type": "text", "text": "01" }
+      ],
+      "notes": "Agora, o produto."
+    },
+    {
+      "layout": "two-columns",
+      "elements": [
+        { "type": "title", "text": "Uma caixa de entrada para tudo" },
+        {
+          "type": "text",
+          "text": "**Canais unificados**\n- WhatsApp, e-mail e chat\n- Histórico completo do cliente\n- Respostas sugeridas"
+        },
+        {
+          "type": "text",
+          "text": "**Automação**\n- Triagem por assunto e urgência\n- Roteamento por habilidade\n- Alertas de SLA ==em tempo real=="
+        }
+      ],
+      "notes": "Esquerda: o que o atendente vê. Direita: o que acontece por trás."
+    },
+    {
+      "layout": "image-text",
+      "variant": "right",
+      "elements": [
+        { "type": "image", "asset": "asset:cidade", "alt": "Ilustração geométrica de uma cidade" },
+        { "type": "title", "text": "Feita para operações grandes" },
+        {
+          "type": "text",
+          "text": "Escala para **milhares** de atendentes, com permissões por equipe, auditoria completa e dados hospedados no Brasil."
+        }
+      ],
+      "notes": "Destaque a hospedagem no Brasil: é requisito de vários clientes do setor financeiro."
+    },
+    {
+      "layout": "chart",
+      "elements": [
+        { "type": "title", "text": "A demanda por atendimento digital dobrou" },
+        {
+          "type": "chart",
+          "kind": "bar",
+          "labels": ["2022", "2023", "2024", "2025", "2026"],
+          "series": [
+            { "name": "Digital", "values": [32, 41, 55, 63, 71] },
+            { "name": "Telefone", "values": [68, 59, 45, 37, 29] }
+          ],
+          "unit": "%",
+          "showValues": true
+        },
+        {
+          "type": "text",
+          "text": "Em 2026, **7 de cada 10** contatos começam por um canal digital."
+        }
+      ],
+      "notes": "Fonte: pesquisa setorial 2026. A curva se inverteu em 2024."
+    },
+    {
+      "layout": "comparison",
+      "elements": [
+        { "type": "title", "text": "Antes e depois da Aurora" },
+        { "type": "text", "text": "Hoje" },
+        {
+          "type": "text",
+          "text": "- 6 sistemas abertos\n- Planilhas para SLA\n- Relatórios semanais manuais"
+        },
+        { "type": "text", "text": "Com a Aurora" },
+        {
+          "type": "text",
+          "text": "- Uma única tela\n- SLA monitorado ao vivo\n- Painéis em tempo real"
+        }
+      ],
+      "notes": "Leia os dois lados lentamente; deixe o contraste falar."
+    },
+    {
+      "layout": "timeline",
+      "elements": [
+        { "type": "title", "text": "Cronograma de lançamento" },
+        {
+          "type": "timeline",
+          "items": [
+            { "date": "Nov/26", "title": "Beta fechado", "text": "10 clientes" },
+            { "date": "Jan/27", "title": "Lançamento", "text": "Evento e imprensa" },
+            { "date": "Mar/27", "title": "Integrações", "text": "CRM e ERP" },
+            { "date": "Jun/27", "title": "Expansão", "text": "América Latina" }
+          ]
+        }
+      ],
+      "notes": "O marco crítico é janeiro: tudo antes disso é preparação."
+    },
+    {
+      "layout": "table",
+      "elements": [
+        { "type": "title", "text": "Planos e preços" },
+        {
+          "type": "table",
+          "header": ["Plano", "Atendentes", "Canais", "Preço/mês"],
+          "rows": [
+            ["**Essencial**", "até 10", "2", "R$ 990"],
+            ["**Profissional**", "até 50", "Todos", "R$ 3.900"],
+            ["**Enterprise**", "ilimitado", "Todos + API", "Sob consulta"]
+          ],
+          "highlightFirstColumn": true
+        },
+        { "type": "text", "text": "Preços de lançamento válidos até março de 2027." }
+      ],
+      "notes": "O plano Profissional é o foco comercial."
+    },
+    {
+      "layout": "quote",
+      "elements": [
+        {
+          "type": "quote",
+          "text": "Pela primeira vez, o time inteiro olha para o mesmo cliente ao mesmo tempo.",
+          "author": "Marina Costa",
+          "role": "Head de Atendimento, cliente piloto"
+        }
+      ],
+      "transition": { "type": "dissolve", "durationMs": 900 },
+      "notes": "Deixe a citação na tela por alguns segundos antes de falar."
+    },
+    {
+      "layout": "full-image",
+      "elements": [
+        {
+          "type": "image",
+          "asset": "asset:montanhas",
+          "alt": "Montanhas em camadas ao amanhecer",
+          "kenBurns": true
+        },
+        { "type": "title", "text": "O próximo passo é seu" },
+        { "type": "text", "text": "Vagas abertas para o beta fechado" }
+      ],
+      "notes": "Transição para o encerramento."
+    },
+    {
+      "layout": "closing",
+      "elements": [
+        { "type": "title", "text": "Obrigado!" },
+        { "type": "text", "text": "Perguntas? Vamos conversar." },
+        {
+          "type": "text",
+          "text": "produto@aurora.com.br · [aurora.com.br](https://aurora.com.br)"
+        },
+        { "type": "icon", "name": "sparkles" }
+      ],
+      "notes": "Abra para perguntas. Tenha o slide de preços à mão."
+    }
+  ]
+}

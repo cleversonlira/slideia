@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+coverage/
+test-results/
+playwright-report/
+*.log
+.env
+.env.*
+!.env.example
+data/
+
+# Local material (client decks), never published
+ppts/

@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "Workshop: Hábitos Sustentáveis no Escritório",
+    "author": "Comitê Verde",
+    "lang": "pt-BR",
+    "aspectRatio": "4:3",
+    "theme": "natureza",
+    "defaultTransition": { "type": "slide", "direction": "left", "durationMs": 700 }
+  },
+  "slides": [
+    {
+      "layout": "cover",
+      "elements": [
+        { "type": "title", "text": "Hábitos sustentáveis no escritório" },
+        { "type": "text", "text": "Workshop · 45 minutos" },
+        { "type": "icon", "name": "leaf" }
+      ],
+      "notes": "Apresente-se e pergunte quem já separa o lixo em casa."
+    },
+    {
+      "layout": "quote",
+      "elements": [
+        {
+          "type": "quote",
+          "text": "Não herdamos a Terra de nossos pais; nós a pegamos emprestada de nossos filhos.",
+          "author": "Provérbio popular"
+        }
+      ],
+      "notes": "Leia a frase e faça uma pausa."
+    },
+    {
+      "layout": "two-columns",
+      "elements": [
+        { "type": "title", "text": "Pequenas ações, grande impacto" },
+        { "type": "icon", "name": "recycle", "color": "accent", "size": "lg" },
+        {
+          "type": "text",
+          "text": "Um escritório de **100 pessoas** gera cerca de ==2 toneladas== de resíduos por mês. Mais da metade pode ser reciclada.",
+          "animation": { "type": "rise" }
+        }
+      ],
+      "notes": "Dado: média de escritórios urbanos no Brasil."
+    },
+    {
+      "layout": "timeline",
+      "elements": [
+        { "type": "title", "text": "Nossa jornada" },
+        {
+          "type": "timeline",
+          "items": [
+            { "date": "Semana 1", "title": "Diagnóstico" },
+            { "date": "Semana 2", "title": "Coleta seletiva" },
+            { "date": "Semana 4", "title": "Fim dos copos descartáveis" },
+            { "date": "Mês 3", "title": "Balanço e prêmio" }
+          ]
+        }
+      ],
+      "notes": "Cada etapa tem um embaixador por andar."
+    },
+    {
+      "layout": "comparison",
+      "elements": [
+        { "type": "title", "text": "Troque isto…" },
+        { "type": "text", "text": "Evite" },
+        {
+          "type": "text",
+          "text": "- Copos descartáveis\n- Impressões desnecessárias\n- Luzes acesas sem uso"
+        },
+        { "type": "text", "text": "Prefira" },
+        {
+          "type": "text",
+          "text": "- Caneca ou garrafa própria\n- Documentos digitais\n- Sensor de presença"
+        }
+      ],
+      "transition": { "type": "cube3d", "direction": "left", "durationMs": 1000 },
+      "notes": "Peça exemplos da plateia antes de revelar a coluna da direita."
+    },
+    {
+      "layout": "title-content",
+      "elements": [
+        { "type": "title", "text": "Combinados da equipe" },
+        {
+          "type": "text",
+          "text": "- Cada um traz sua caneca até sexta\n- Impressão só ==frente e verso==\n- Último a sair apaga as luzes\n- Dúvidas? Fale com o Comitê Verde",
+          "animation": { "type": "rise", "by": "paragraph" }
+        }
+      ],
+      "notes": "Feche com os combinados práticos."
+    },
+    {
+      "layout": "closing",
+      "elements": [
+        { "type": "title", "text": "Obrigado!" },
+        { "type": "text", "text": "Juntos fazemos a diferença." },
+        { "type": "text", "text": "comite.verde@empresa.com.br" },
+        { "type": "icon", "name": "sprout" }
+      ]
+    }
+  ]
+}

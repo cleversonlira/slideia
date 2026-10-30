@@ -1,0 +1,36 @@
+{
+  "name": "@apresenta/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "apresenta-mcp": "./dist/stdio.js"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "tsx scripts/build.ts",
+    "dev": "tsx src/stdio.ts"
+  },
+  "dependencies": {
+    "@apresenta/core": "workspace:*",
+    "@apresenta/renderer": "workspace:*",
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@electric-sql/pglite": "^0.5.10",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "express": "^5.3.0",
+    "nodemailer": "^10.1.2",
+    "pg": "^8.23.1",
+    "playwright-core": "^1.64.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "esbuild": "^0.28.2"
+  }
+}

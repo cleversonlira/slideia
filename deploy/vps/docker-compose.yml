@@ -1,0 +1,43 @@
+# Production stack on the VPS (slideia.site): remote server + Postgres.
+# Lives in /opt/slideia on the server; deploy/vps/deploy.sh copies it there.
+# The app listens only on 127.0.0.1:8787; nginx on the host terminates TLS and proxies to it.
+name: slideia
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: slideia
+    volumes: [db:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d slideia"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build:
+      context: ./src
+    image: slideia:latest
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/slideia
+      DATA_DIR: /data
+      PORT: "8787"
+      TRUST_PROXY: "1"
+    ports: ["127.0.0.1:8787:8787"]
+    volumes: [data:/data]
+    networks: [internal]
+    mem_limit: 2g
+
+networks:
+  internal:
+
+volumes:
+  db:
+  data:

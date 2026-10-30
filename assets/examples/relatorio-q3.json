@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "title": "Relatório Trimestral — 3º tri 2026",
+    "author": "Diretoria Financeira",
+    "lang": "pt-BR",
+    "aspectRatio": "16:9",
+    "theme": "corporativo",
+    "defaultTransition": { "type": "push", "direction": "left", "durationMs": 600 }
+  },
+  "slides": [
+    {
+      "layout": "cover",
+      "elements": [
+        { "type": "title", "text": "Resultados do 3º trimestre de 2026" },
+        { "type": "text", "text": "Reunião de conselho · 14 de outubro de 2026" },
+        { "type": "icon", "name": "building-2" }
+      ],
+      "notes": "Apresentação de 15 minutos, seguida de perguntas."
+    },
+    {
+      "layout": "stats",
+      "elements": [
+        { "type": "title", "text": "Destaques do trimestre" },
+        { "type": "stat", "value": "R$ 48,2 mi", "label": "receita líquida", "trend": "up" },
+        { "type": "stat", "value": "21,4%", "label": "margem EBITDA", "trend": "up" },
+        { "type": "stat", "value": "1,8%", "label": "churn mensal", "trend": "down" },
+        { "type": "stat", "value": "312", "label": "novos clientes" }
+      ],
+      "notes": "Receita cresceu 18% sobre o 3º tri de 2025."
+    },
+    {
+      "layout": "chart",
+      "elements": [
+        { "type": "title", "text": "Receita cresce pelo sexto trimestre seguido" },
+        {
+          "type": "chart",
+          "kind": "line",
+          "labels": ["2T25", "3T25", "4T25", "1T26", "2T26", "3T26"],
+          "series": [
+            { "name": "Receita (R$ mi)", "values": [36.1, 40.8, 42.5, 43.9, 45.7, 48.2] },
+            { "name": "Meta", "values": [37, 39, 41, 43, 45, 47], "color": "muted" }
+          ],
+          "showValues": true
+        }
+      ],
+      "notes": "Acima da meta em todos os trimestres do ano."
+    },
+    {
+      "layout": "chart",
+      "elements": [
+        { "type": "title", "text": "Composição da receita" },
+        {
+          "type": "chart",
+          "kind": "donut",
+          "labels": ["Assinaturas", "Serviços", "Licenças", "Outros"],
+          "series": [{ "name": "Participação", "values": [62, 21, 12, 5] }],
+          "unit": "%"
+        },
+        {
+          "type": "text",
+          "text": "- Assinaturas: **62%** da receita\n- Serviços cresceram 9 p.p. no ano\n- Licenças perpétuas em queda planejada"
+        }
+      ],
+      "notes": "A migração para assinaturas segue o plano."
+    },
+    {
+      "layout": "table",
+      "elements": [
+        { "type": "title", "text": "DRE resumida (R$ mi)" },
+        {
+          "type": "table",
+          "header": ["Indicador", "3T25", "3T26", "Var."],
+          "rows": [
+            ["Receita líquida", "40,8", "48,2", "[+18,1%]{color=success}"],
+            ["Custos", "(24,1)", "(27,3)", "[+13,3%]{color=danger}"],
+            ["Lucro bruto", "16,7", "20,9", "[+25,1%]{color=success}"],
+            ["EBITDA", "7,9", "10,3", "[+30,4%]{color=success}"],
+            ["Lucro líquido", "4,2", "6,1", "[+45,2%]{color=success}"]
+          ],
+          "highlightFirstColumn": true
+        },
+        { "type": "text", "text": "Valores não auditados." }
+      ],
+      "notes": "Destaque o lucro líquido: +45%."
+    },
+    {
+      "layout": "two-columns",
+      "elements": [
+        { "type": "title", "text": "Riscos e oportunidades" },
+        {
+          "type": "text",
+          "text": "**Riscos**\n- Câmbio pressiona custos de nuvem\n- Concorrência em preço no segmento PME"
+        },
+        {
+          "type": "text",
+          "text": "**Oportunidades**\n- Expansão para o setor público\n- Novo módulo de IA com margem maior"
+        }
+      ],
+      "notes": "Riscos estão mapeados e com plano de mitigação."
+    },
+    {
+      "layout": "title-content",
+      "elements": [
+        { "type": "title", "text": "Prioridades para o 4º trimestre" },
+        {
+          "type": "text",
+          "text": "1. Fechar 3 contratos com o setor público\n2. Lançar o módulo de IA para todos os clientes\n3. Reduzir custo de nuvem em 8%\n4. Contratar 25 pessoas para engenharia",
+          "animation": { "type": "fade", "by": "paragraph" }
+        }
+      ],
+      "notes": "Cada prioridade tem um diretor responsável."
+    },
+    {
+      "layout": "closing",
+      "elements": [
+        { "type": "title", "text": "Perguntas" },
+        { "type": "text", "text": "Obrigado pela atenção." },
+        { "type": "text", "text": "ri@empresa.com.br" }
+      ]
+    }
+  ]
+}

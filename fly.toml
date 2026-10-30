@@ -1,0 +1,41 @@
+# Fly.io deployment (remote mode). Steps in docs/REMOTO.md.
+#   fly launch --no-deploy --copy-config
+#   fly postgres create  &&  fly postgres attach <db-app>     (sets DATABASE_URL)
+#   fly storage create                                         (Tigris: sets S3 variables)
+#   fly secrets set PUBLIC_URL=https://<app>.fly.dev BLOB_DRIVER=s3 MAIL_DRIVER=resend RESEND_API_KEY=… …
+#   fly deploy
+
+app = "apresenta"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+  TRUST_PROXY = "1"
+  DATA_DIR = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 60
+    hard_limit = 100
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
