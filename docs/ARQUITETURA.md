@@ -605,3 +605,19 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
   (o widget fica no histórico). No modo local (sem links assinados) as imagens vão inline.
 - Fallback para o Apps SDK legado: `window.openai.toolResponseMetadata` e `openExternal`.
 
+## 21. SDK do MCP v2 (protocolo 2026-07-28)
+
+- O servidor usa `@modelcontextprotocol/server` 2.x (antes `@modelcontextprotocol/sdk` 1.x, que só ia
+  até 2025-11-25: Claude e ChatGPT tentavam 2026-07-28, recebiam 400 e recuavam).
+- Remoto: um único `createMcpHandler(factory, { responseMode: "json" })` montado com
+  `toNodeHandler` (`@modelcontextprotocol/node`). Atende clientes 2026-07-28 e, sem estado, os da era
+  2025 (handshake `initialize`). A autenticação continua nossa (`mcpAccess`): o resultado vai em
+  `req.auth` (`extra.userId`) e chega à fábrica como `authInfo`.
+- Local: `StdioServerTransport` de `@modelcontextprotocol/server/stdio`.
+- O SDK v2 ainda gera `$schema`, `propertyNames`, `additionalProperties: {}` e ±MAX_SAFE_INTEGER:
+  `portableToolSchemas` (Gemini) continua necessário e funciona pelo mesmo `_requestHandlers`.
+- Testes: `server.test.ts` usa o cliente v2 em memória; `remote.test.ts` mantém o cliente v1 pela
+  rede (prova a compatibilidade 2025) e tem um teste com o cliente v2 fixado em 2026-07-28.
+- Pendente: `subscriptions/listen` + `handler.notify` permitiriam avisar clientes 2026 quando a lista
+  de ferramentas muda (evitaria reconectar).
+

@@ -1,6 +1,7 @@
 import type { EventEmitter } from "node:events";
 import { createHash } from "node:crypto";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import { createMcpHandler, type AuthInfo } from "@modelcontextprotocol/server";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import type { BlobStore } from "../blobs.js";
 import { mountEditor, readCookie, sendPresentationHtml } from "../http.js";
@@ -992,6 +993,33 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     });
   });
 
+  /**
+   * One MCP endpoint for both protocol eras: 2026-07-28 clients and 2025-era clients (initialize
+   * handshake, served statelessly). A fresh server per request, scoped to the token's user.
+   */
+  const mcpHandler = createMcpHandler(
+    ({ authInfo }) => {
+      const userId = authInfo?.extra?.userId;
+      if (!authInfo || typeof userId !== "string") throw new Error("MCP request without auth");
+      return createMcpServer(serviceFor(userId), ctx.previewer, {
+        canWrite: authInfo.scopes.includes("presentations:write"),
+        onToolCall: (name, ms, ok, error) => {
+          metrics.tool(name, ms, ok);
+          log("tool", {
+            tool: name,
+            ms: Math.round(ms),
+            ok,
+            user: anon(userId),
+            client: authInfo.clientId,
+            ...(error ? { error } : {}),
+          });
+        },
+      });
+    },
+    { responseMode: "json" },
+  );
+  const mcpNode = toNodeHandler(mcpHandler, { onerror: (err) => console.error(err) });
+
   app.post("/mcp", express.json({ limit: "25mb" }), async (req, res) => {
     const access = await mcpAccess(req, res);
     if (!access) return;
@@ -1003,31 +1031,16 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       });
       return;
     }
-    const server = createMcpServer(serviceFor(access.userId), ctx.previewer, {
-      canWrite: access.scopes.includes("presentations:write"),
-      onToolCall: (name, ms, ok, error) => {
-        metrics.tool(name, ms, ok);
-        log("tool", {
-          tool: name,
-          ms: Math.round(ms),
-          ok,
-          user: anon(access.userId),
-          client: access.clientId,
-          ...(error ? { error } : {}),
-        });
-      },
-    });
-    // Stateless: no session id generator; one transport per request.
-    const transport = new StreamableHTTPServerTransport({
-      enableJsonResponse: true,
-    } as ConstructorParameters<typeof StreamableHTTPServerTransport>[0]);
-    res.on("close", () => {
-      void transport.close();
-      void server.close();
-    });
+    // The SDK forwards req.auth as the factory's authInfo (verified above, never by the SDK).
+    const token = (req.headers.authorization ?? "").slice(7).trim();
+    (req as Request & { auth?: AuthInfo }).auth = {
+      token,
+      clientId: access.clientId,
+      scopes: access.scopes,
+      extra: { userId: access.userId },
+    };
     try {
-      await server.connect(transport as unknown as Parameters<typeof server.connect>[0]);
-      await transport.handleRequest(req, res, req.body);
+      await mcpNode(req, res, req.body);
     } catch (err) {
       console.error(err);
       if (!res.headersSent)

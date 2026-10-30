@@ -7,6 +7,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
+  Client as ModernClient,
+  StreamableHTTPClientTransport as ModernHttpTransport,
+} from "@modelcontextprotocol/client";
+import {
   UnauthorizedError,
   type OAuthClientProvider,
 } from "@modelcontextprotocol/sdk/client/auth.js";
@@ -309,6 +313,46 @@ describe("OAuth + MCP with the official SDK client", () => {
     const first = await res.body!.getReader().read();
     expect(new TextDecoder().decode(first.value)).toContain(": slideia");
     ctrl.abort();
+  });
+
+  it("serves a 2026-07-28 client (v2 SDK) with the same token", async () => {
+    // The v1 client above negotiates 2025-11-25 (initialize handshake); the v2 client speaks the
+    // 2026-07-28 revision, which the v1 server SDK rejected with 400 before the migration.
+    const modern = new ModernClient(
+      { name: "modern", version: "1" },
+      { versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
+    await modern.connect(
+      new ModernHttpTransport(new URL(`${base}/mcp`), {
+        authProvider: { token: async () => provider.saved!.access_token },
+      }),
+    );
+    try {
+      expect(modern.getNegotiatedProtocolVersion()).toBe("2026-07-28");
+      const { tools } = await modern.listTools();
+      const create = tools.find((t) => t.name === "create_presentation")!;
+      // The portable-schema rewrite (Gemini) also applies to this protocol revision.
+      expect(JSON.stringify(tools.map((t) => t.inputSchema))).not.toMatch(
+        /"\$schema"|"propertyNames"|"additionalProperties"/,
+      );
+      expect((create._meta as { ui?: { resourceUri?: string } }).ui?.resourceUri).toBe(
+        "ui://slideia/viewer-v1.html",
+      );
+      const r = (await modern.callTool({
+        name: "create_presentation",
+        arguments: {
+          presentation: {
+            slides: [{ layout: "cover", elements: [{ type: "title", text: "2026" }] }],
+          },
+        },
+      })) as ToolResult;
+      expect(r.isError).toBeFalsy();
+      expect(r.content[0]!.text).toContain('Created "2026"');
+      const view = await modern.readResource({ uri: "ui://slideia/viewer-v1.html" });
+      expect(view.contents[0]!.mimeType).toBe("text/html;profile=mcp-app");
+    } finally {
+      await modern.close();
+    }
   });
 
   it("registered dynamically and got tokens for the MCP resource", () => {

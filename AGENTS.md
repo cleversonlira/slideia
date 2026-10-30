@@ -28,7 +28,8 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
   `dist/widget.js`, HTML montado por `buildWidgetHtml` em `src/node/widget.ts`).
 - `packages/server` — serviço (`service.ts`: criar, `apply` com rebase/conflito, histórico,
   imagens, `get_changes`), armazenamento SQLite (`node:sqlite`, WAL, vários processos), MCP
-  (`mcp.ts`, 10 tools + prompts + resources), API HTTP do editor (`http.ts`: token → cookie,
+  (`mcp.ts`, 10 tools + prompts + resources; SDK `@modelcontextprotocol/server` v2, protocolo
+  2026-07-28 e 2025-era), API HTTP do editor (`http.ts`: token → cookie,
   CSRF por cabeçalho `x-apresenta`, proteção de Host, SSE), preview com Chrome headless
   (`playwright-core`), download de imagens com proteção SSRF (`images.ts`). Entrada: `stdio.ts`;
   `scripts/build.ts` gera `dist/stdio.js` com editor, player, fontes e exemplos ao lado.

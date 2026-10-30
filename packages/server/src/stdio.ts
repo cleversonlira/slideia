@@ -6,7 +6,7 @@
  *   apresenta-mcp --editor   only the editor (no MCP), prints its link
  *   --seed-examples          with --editor: imports the example presentations into an empty folder
  */
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { loadConfig } from "./config.js";
 import { importExamples } from "./examples.js";
 import { createMcpServer } from "./mcp.js";
