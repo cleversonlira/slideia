@@ -31,13 +31,15 @@ rsync -az --delete \
   --exclude node_modules --exclude dist --exclude out --exclude data --exclude ppts \
   --exclude test-results --exclude playwright-report --exclude .env --exclude deploy \
   "$ROOT/" "$VPS:$REMOTE/src/"
-scp -q "$HERE/docker-compose.yml" "$HERE/backup.sh" "$VPS:$REMOTE/"
+scp -q "$HERE/docker-compose.yml" "$HERE/backup.sh" "$HERE/watchdog.sh" "$HERE/restore-test.sh" "$VPS:$REMOTE/"
 
 info "Preparando configuração e subindo os contêineres (o build leva alguns minutos)..."
 ssh "$VPS" DOMAIN="$DOMAIN" REMOTE="$REMOTE" bash -s <<'EOF'
 set -euo pipefail
 cd "$REMOTE"
-chmod +x backup.sh
+chmod +x backup.sh watchdog.sh restore-test.sh
+# Watchdog every 5 minutes (alerts by email; see watchdog.sh).
+( { crontab -l 2>/dev/null || true; } | { grep -v "$REMOTE/watchdog.sh" || true; }; echo "*/5 * * * * $REMOTE/watchdog.sh >> $REMOTE/watchdog.log 2>&1" ) | crontab -
 if [[ ! -f .env ]]; then
   umask 077
   cat > .env <<ENV

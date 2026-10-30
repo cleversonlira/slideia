@@ -90,6 +90,14 @@ A produção roda numa VPS Ubuntu com Docker e nginx já existentes (outros site
 - O app escuta só em `127.0.0.1:8787`; o nginx do host termina o TLS
   (`deploy/vps/nginx-slideia.site.conf`: `client_max_body_size 25m`, SSE sem buffer, `www` → raiz).
 - Backup diário às 03:30 (dump do Postgres + volume de imagens), 14 dias de retenção.
+  Para provar que o backup volta: `ssh <vps> /opt/slideia/restore-test.sh` (restaura o último dump
+  num Postgres descartável, sem rede, e confere o arquivo de imagens; a produção não é tocada).
+- `watchdog.sh` (cron a cada 5 min, instalado pelo deploy) manda e-mail para `ALERT_EMAIL` (padrão
+  `SUPPORT_EMAIL`) pelo `SMTP_URL` quando `/healthz` falha duas vezes seguidas, o último backup tem
+  mais de 30 h, o certificado vence em menos de 14 dias ou o disco passa de 90%; avisa de novo quando
+  normaliza. `watchdog.sh --test` envia um e-mail de teste. Ele roda na própria VPS, então não avisa
+  se a VPS inteira cair: para isso, um monitor externo gratuito (UptimeRobot, Better Stack…)
+  apontando para `https://slideia.site/healthz`.
 - Logs: `ssh <vps> 'cd /opt/slideia && docker compose logs -f app'`.
 
 ## Deploy (Fly.io)
