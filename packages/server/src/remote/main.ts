@@ -68,6 +68,7 @@ export async function startRemote(
         editor: () => "",
         download: () => "",
         present: () => "",
+        pptx: () => "",
       });
       await importExamples(svc);
       log("demo_account_created", { email: config.demo.email });

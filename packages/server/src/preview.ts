@@ -1,5 +1,6 @@
 import { chromium, type Browser } from "playwright-core";
 import sharp from "sharp";
+import { HIDE_CLASS, scanSlide, type ScanItem } from "./pptx-scan.js";
 
 export class PreviewUnavailableError extends Error {}
 
@@ -25,6 +26,10 @@ const MAX_SHEET = 24;
  */
 export class Previewer {
   private browser: Promise<Browser> | null = null;
+  /** PowerPoint exports lay out every slide at full size: a few at a time. */
+  private scans = 0;
+  private readonly waiting: Array<() => void> = [];
+  static readonly MAX_SCANS = 2;
 
   private async launch(): Promise<Browser> {
     this.browser ??= (async () => {
@@ -103,6 +108,73 @@ export class Previewer {
           ? await sharp(shots[0]).jpeg({ quality: 82 }).toBuffer()
           : await contactSheet(shots, wanted, width / 2, 270);
       return { image, mime: "image/jpeg", issues, slides: wanted };
+    } finally {
+      await page.close();
+    }
+  }
+
+  /**
+   * Measures every slide for the PowerPoint export: native objects (see pptx-scan.ts) plus a
+   * picture of what is left (backgrounds and decorations) at the canvas size.
+   */
+  async scanDeck(
+    html: string,
+    aspect: "16:9" | "4:3",
+  ): Promise<Array<{ items: ScanItem[]; background: Buffer }>> {
+    if (this.scans >= Previewer.MAX_SCANS)
+      await new Promise<void>((resolve) => this.waiting.push(resolve));
+    this.scans++;
+    try {
+      return await this.scan(html, aspect);
+    } finally {
+      this.scans--;
+      this.waiting.shift()?.();
+    }
+  }
+
+  private async scan(
+    html: string,
+    aspect: "16:9" | "4:3",
+  ): Promise<Array<{ items: ScanItem[]; background: Buffer }>> {
+    const browser = await this.launch();
+    const width = aspect === "4:3" ? 1440 : 1920;
+    const page = await browser.newPage({
+      viewport: { width, height: 1080 },
+      reducedMotion: "reduce",
+    });
+    try {
+      await page.setContent(html, { waitUntil: "load" });
+      // Bundlers that keep function names wrap them in __name(); the page has no such helper.
+      await page.evaluate("globalThis.__name = (f) => f");
+      await page.waitForFunction(() => "apresenta" in window, null, { timeout: 15_000 });
+      await page.addStyleTag({
+        content: `.${HIDE_CLASS}{visibility:hidden!important}.deck .el.is-overflowing{outline:none!important}.chrome,.toast,.hud-goto{display:none!important}`,
+      });
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        (window as unknown as { apresenta: { fit(): void } }).apresenta.fit();
+      });
+      const total = await page.evaluate(() => document.querySelectorAll(".stage > .slide").length);
+      const out: Array<{ items: ScanItem[]; background: Buffer }> = [];
+      for (let i = 0; i < total; i++) {
+        const box = await page.evaluate((n) => {
+          const p = (
+            window as unknown as {
+              apresenta: { slides: HTMLElement[]; activate(i: number, s: number): void };
+            }
+          ).apresenta;
+          p.activate(n, 0);
+          const el = p.slides[n]!;
+          el.querySelectorAll("[data-step]").forEach((s) => s.classList.add("revealed"));
+          for (const a of document.getAnimations()) a.finish();
+          const r = el.getBoundingClientRect();
+          return { x: r.left, y: r.top, width: r.width, height: r.height };
+        }, i);
+        const items = await page.evaluate(scanSlide, i);
+        const background = await page.screenshot({ type: "jpeg", quality: 90, clip: box });
+        out.push({ items, background });
+      }
+      return out;
     } finally {
       await page.close();
     }

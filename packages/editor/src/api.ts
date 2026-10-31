@@ -89,6 +89,7 @@ export const exportUrls = {
   html: (id: string) => `/api/presentations/${id}/export.html`,
   download: (id: string) => `/api/presentations/${id}/export.html?download=1`,
   json: (id: string) => `/api/presentations/${id}/export.json`,
+  pptx: (id: string) => `/api/presentations/${id}/export.pptx`,
 };
 
 /** Asset references are served by the local server. */

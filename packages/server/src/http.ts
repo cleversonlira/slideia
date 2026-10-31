@@ -4,6 +4,8 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import { PresentationError, formatIssues } from "@slideia/core";
 import { allFontFiles } from "@slideia/renderer/node";
 import { ImageError } from "./images.js";
+import { renderPptx } from "./pptx.js";
+import { PreviewUnavailableError, type Previewer } from "./preview.js";
 import {
   ConflictError,
   LimitError,
@@ -26,6 +28,8 @@ export interface EditorOptions {
   auth: EditorAuth;
   /** Service scoped to a user. */
   serviceFor(userId: string): PresentationService;
+  /** Headless browser for the PowerPoint export. */
+  previewer: Previewer;
   editorDist?: string | undefined;
 }
 
@@ -99,6 +103,10 @@ export function apiErrorHandler(
   else if (err instanceof NotFoundError) res.status(404).json({ error: err.message });
   else if (err instanceof LimitError || err instanceof ImageError)
     res.status(422).json({ error: err.message });
+  else if (err instanceof PreviewUnavailableError)
+    res.status(503).json({
+      error: "Para gerar o PowerPoint é preciso o Google Chrome ou o Microsoft Edge instalado.",
+    });
   else if ((err as { type?: string }).type === "entity.too.large")
     res.status(413).json({ error: "Arquivo grande demais." });
   else if ((err as { type?: string }).type === "entity.parse.failed")
@@ -333,6 +341,13 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
   );
 
   api.get(
+    "/presentations/:id/export.pptx",
+    withService(async (req, res, svc) =>
+      sendPresentationPptx(svc, opts.previewer, String(req.params.id), res),
+    ),
+  );
+
+  api.get(
     "/presentations/:id/export.json",
     withService(async (req, res, svc) => {
       const p = await svc.get(String(req.params.id));
@@ -412,6 +427,27 @@ export async function sendPresentationHtml(
   res.send(html);
 }
 
+/** Sends the presentation as an editable PowerPoint file (laid out in the headless browser). */
+export async function sendPresentationPptx(
+  svc: PresentationService,
+  previewer: Previewer,
+  id: string,
+  res: Response,
+): Promise<void> {
+  const { html, presentation } = await svc.renderHtml(id);
+  const pptx = await renderPptx(previewer, presentation, html);
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  );
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${fileSlug(presentation.meta.title)}.pptx"`,
+  );
+  res.send(pptx);
+}
+
 // ---------------------------------------------------------------------------
 // Local mode: one user, access by the token in the link
 // ---------------------------------------------------------------------------
@@ -420,6 +456,7 @@ export const COOKIE = "apz_session";
 
 export interface LocalAppOptions {
   service: PresentationService;
+  previewer: Previewer;
   token: string;
   /** Allowed Host header values (DNS-rebinding protection). */
   hosts: () => string[];
@@ -448,6 +485,7 @@ export function createHttpApp(opts: LocalAppOptions): Express {
 
   mountEditor(app, {
     editorDist: opts.editorDist,
+    previewer: opts.previewer,
     serviceFor: () => service,
     auth: {
       user(req, res) {

@@ -653,3 +653,27 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
   uma vez, mesmo usada em vários slides. `readEmbeddedPresentation` (renderer, usado pelo CLI e pela
   importação do editor) devolve a apresentação com as imagens de novo inline; arquivos antigos, sem
   o mapa, continuam funcionando.
+
+## 23. Exportação para PowerPoint (.pptx)
+
+- O .pptx sai do mesmo HTML exportado, montado no Chrome headless (`Previewer.scanDeck`, viewport
+  do tamanho do canvas). `scanSlide` (`server/src/pptx-scan.ts`, roda dentro da página e por isso
+  não importa nada) mede cada slide depois do autofit: textos (parágrafos, listas, runs com fonte,
+  tamanho, cor, opacidade, marca-texto e link), imagens (com o recorte visível de `object-fit`/crop),
+  ícones (rasterizados em PNG 2× na cor calculada), gráficos (caixa e cores) e tabelas (colunas,
+  linhas, fundo, borda e padding das células).
+- `buildPptx` (`server/src/pptx.ts`, pptxgenjs) cria esses objetos **nativos e editáveis** nas
+  caixas medidas (1 px = 0,5 pt; 144 px por polegada). Gráficos viram gráficos do PowerPoint com os
+  dados do elemento (editáveis na planilha embutida); tabelas viram tabelas. O que sobra — fundos,
+  gradientes, cartões, faixas de destaque, pontos da linha do tempo, fotos de fundo com o
+  escurecimento — é fotografado com os objetos escondidos e vira a imagem de fundo do slide.
+- Caixas de texto ganham ~4% de largura (o PowerPoint quebra linhas um pouco diferente). As fontes
+  são referenciadas pelo nome, não embutidas: Google Slides tem todas; no PowerPoint sem a fonte
+  instalada, o texto usa uma substituta. Notas do apresentador vão junto; slides ocultos ficam de
+  fora (como no player); transições e animações não são exportadas.
+- pptxgenjs escreve um `<a:pPr>` antes de cada run; `oneParagraphProps` deixa só o primeiro de cada
+  parágrafo (senão o PowerPoint oferece "reparar" o arquivo). Imagens são re-codificadas em PNG
+  (com transparência) ou JPEG e recebem nomes únicos (pptxgenjs reaproveita mídia pelo `path`).
+- Rotas: editor `GET /api/presentations/:id/export.pptx`; remoto, link assinado `/x/:id` (como `/d/`
+  e `/v/`). A tool `render` devolve `pptxUrl`; o widget mostra "PowerPoint". No máximo 2 exportações
+  montadas ao mesmo tempo por processo (`Previewer.MAX_SCANS`).

@@ -215,6 +215,7 @@ export function createMcpServer(
           editor: service.links.editor(p.id),
           present: service.links.present(p.id),
           download: service.links.download(p.id),
+          pptx: service.links.pptx(p.id),
         },
       },
     };
@@ -473,9 +474,9 @@ export function createMcpServer(
   server.registerTool(
     "render",
     {
-      title: "Gerar HTML",
+      title: "Gerar arquivos",
       description:
-        "Generates the standalone .html file (works offline, with presenter-remote support) and returns where to get it.",
+        "Returns the download links: the standalone .html file (works offline, with presenter-remote support) and an editable PowerPoint (.pptx). Use the .pptx link when the user wants PowerPoint, Google Slides or Keynote.",
       inputSchema: { id: z.string() },
       annotations: {
         // Remote mode only returns signed links; locally it writes the .html file.
@@ -488,16 +489,17 @@ export function createMcpServer(
     ({ id }) =>
       safely(async () => {
         const url = service.links.download(id);
+        const pptxUrl = service.links.pptx(id);
         if (!service.writeFiles) {
           await service.get(id);
           return {
             content: [
               {
                 type: "text",
-                text: `Download (link valid for 24 h): ${url}\nPresent online: ${service.links.present(id)}`,
+                text: `Download HTML (link valid for 24 h): ${url}\nDownload PowerPoint (.pptx, editable; link valid for 24 h): ${pptxUrl}\nPresent online: ${service.links.present(id)}`,
               },
             ],
-            structuredContent: { downloadUrl: url, presentUrl: service.links.present(id) },
+            structuredContent: { downloadUrl: url, pptxUrl, presentUrl: service.links.present(id) },
           };
         }
         const r = await service.renderToFile(id);
@@ -505,10 +507,10 @@ export function createMcpServer(
           content: [
             {
               type: "text",
-              text: `Saved ${r.path} (${Math.round(r.bytes / 1024)} KB).\nDownload: ${url}${r.warnings.length ? `\nWarnings:\n${r.warnings.map((w) => `- ${w}`).join("\n")}` : ""}`,
+              text: `Saved ${r.path} (${Math.round(r.bytes / 1024)} KB).\nDownload: ${url}\nPowerPoint (.pptx, editable): ${pptxUrl}${r.warnings.length ? `\nWarnings:\n${r.warnings.map((w) => `- ${w}`).join("\n")}` : ""}`,
             },
           ],
-          structuredContent: { path: r.path, downloadUrl: url, bytes: r.bytes },
+          structuredContent: { path: r.path, downloadUrl: url, pptxUrl, bytes: r.bytes },
         };
       }),
   );

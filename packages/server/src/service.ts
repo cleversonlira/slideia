@@ -30,6 +30,8 @@ export interface Links {
   editor(id: string, slide?: number): string;
   download(id: string): string;
   present(id: string): string;
+  /** PowerPoint (.pptx) download. */
+  pptx(id: string): string;
   /** Public (signed) URL of an image, for the chat widget. Absent: images are inlined. */
   asset?(id: string): string;
 }

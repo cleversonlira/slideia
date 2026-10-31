@@ -41,7 +41,8 @@ o plano de marketing 2027 e me mande o link do editor"*. A IA chama `get_guide`,
 apresentação, confere com `preview` e devolve:
 
 - **link do editor** — clique em qualquer texto para editar; a IA vê suas alterações;
-- **link de download** — o `.html` final (também salvo em `~/Apresentacoes`).
+- **link de download** — o `.html` final (também salvo em `~/Apresentacoes`) e um PowerPoint
+  (`.pptx`) editável.
 
 **Claude Desktop:** `pnpm mcpb` gera `out/slideia-<versão>.mcpb` (macOS e Windows; Node 22.13+,
 que o Claude Desktop já traz). Dê dois cliques no arquivo, ou arraste-o para a janela do Claude
@@ -88,7 +89,7 @@ ChatGPT em modo desenvolvedor ou no Claude. Passo a passo e deploy: [`docs/REMOT
 - Modo **Roteiro**: todos os textos e anotações em sequência, como um documento.
 - Desfazer/refazer, localizar e substituir, histórico de versões (“Você” / “IA”) com restauração.
 - Salvamento automático; alterações da IA aparecem em tempo real e destacadas.
-- Apresentar (F5), Baixar HTML, Imprimir/PDF, Exportar JSON.
+- Apresentar (F5), Baixar HTML, PowerPoint (.pptx editável), Imprimir/PDF, Exportar JSON.
 
 ## Apresentando
 

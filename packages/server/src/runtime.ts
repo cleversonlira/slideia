@@ -54,6 +54,7 @@ function makeLinks(base: () => string, token: string): Links {
     editor: (id, slide) => `${base()}/p/${id}?${slide ? `slide=${slide}&` : ""}t=${token}`,
     download: (id) => `${base()}/api/presentations/${id}/export.html?download=1&t=${token}`,
     present: (id) => `${base()}/api/presentations/${id}/export.html?t=${token}`,
+    pptx: (id) => `${base()}/api/presentations/${id}/export.pptx?t=${token}`,
   };
 }
 
@@ -75,6 +76,7 @@ export async function startRuntime(
   const previewer = new Previewer();
   const app = createHttpApp({
     service,
+    previewer,
     token,
     hosts: () => [`127.0.0.1:${port}`, `localhost:${port}`],
   });

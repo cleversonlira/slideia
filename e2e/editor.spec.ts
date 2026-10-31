@@ -214,6 +214,19 @@ test("MCP creates 10 slides, the user edits in the editor and downloads the HTML
   expect(html).toContain("O que aprendemos em 2026");
   expect(html).toContain("versão final");
 
+  // And as an editable PowerPoint, with the manual edit.
+  await page.locator("button", { hasText: "Baixar" }).click();
+  const [pptx] = await Promise.all([
+    page.waitForEvent("download", { timeout: 30_000 }),
+    page.locator(".menu button", { hasText: "PowerPoint" }).click(),
+  ]);
+  expect(pptx.suggestedFilename()).toMatch(/\.pptx$/);
+  const pptxFile = testInfo.outputPath("apresentacao.pptx");
+  await pptx.saveAs(pptxFile);
+  const zip = readFileSync(pptxFile);
+  expect(zip.subarray(0, 2).toString()).toBe("PK");
+  expect(zip.byteLength).toBeGreaterThan(20_000);
+
   // It presents offline.
   await page.goto(`file://${file}`);
   await expect(page.locator(".stage > .slide")).toHaveCount(10);

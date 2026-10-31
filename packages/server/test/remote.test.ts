@@ -533,7 +533,16 @@ describe("OAuth + MCP with the official SDK client", () => {
       name: "render",
       arguments: { id: (r.structuredContent as { id: string }).id },
     })) as ToolResult;
-    expect(rendered.content[0]!.text).toContain("Download (link valid for 24 h)");
+    expect(rendered.content[0]!.text).toContain("Download HTML (link valid for 24 h)");
+    // Signed PowerPoint link (laid out in the headless browser; 503 without Chrome).
+    const { pptxUrl } = rendered.structuredContent as { pptxUrl: string };
+    expect(pptxUrl).toMatch(new RegExp(`^${base}/x/p_`));
+    const px = await fetch(pptxUrl);
+    if (px.status !== 503) {
+      expect(px.status).toBe(200);
+      expect(px.headers.get("content-type")).toContain("presentationml.presentation");
+    }
+    expect((await fetch(pptxUrl.replace(/s=[^&]+/, "s=abc"))).status).toBe(403);
 
     // The same account sees it in the editor API (session cookie) — and CSRF is enforced.
     const list = (await (await browser.fetch(`${base}/api/presentations`)).json()) as {

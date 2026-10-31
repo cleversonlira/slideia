@@ -6,9 +6,9 @@ import { toNodeHandler } from "@modelcontextprotocol/node";
 import { createMcpHandler, type AuthInfo } from "@modelcontextprotocol/server";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import type { BlobStore } from "../blobs.js";
-import { mountEditor, readCookie, sendPresentationHtml } from "../http.js";
+import { mountEditor, readCookie, sendPresentationHtml, sendPresentationPptx } from "../http.js";
 import { VIEW_URI, createMcpServer, publishedSurface } from "../mcp.js";
-import type { Previewer } from "../preview.js";
+import { PreviewUnavailableError, type Previewer } from "../preview.js";
 import { NotFoundError, PresentationService, type Links } from "../service.js";
 import { AccountError, type Accounts, type User } from "./accounts.js";
 import type { RemoteConfig } from "./config.js";
@@ -129,7 +129,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   const MEDIA_LINK_TTL = 30 * 24 * 3600;
 
   const linksFor = (owner: string): Links => {
-    const signed = (kind: "d" | "v" | "m", id: string, ttl = config.linkTtl) => {
+    const signed = (kind: "d" | "v" | "x" | "m", id: string, ttl = config.linkTtl) => {
       const exp = Math.floor(Date.now() / 1000) + ttl;
       const sig = hmac(ctx.signingKey, `${kind}:${owner}:${id}:${exp}`);
       return `${config.publicUrl}/${kind}/${id}?o=${encodeURIComponent(owner)}&e=${exp}&s=${sig}`;
@@ -138,6 +138,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       editor: (id, slide) => `${config.publicUrl}/p/${id}${slide ? `?slide=${slide}` : ""}`,
       download: (id) => signed("d", id),
       present: (id) => signed("v", id),
+      pptx: (id) => signed("x", id),
       asset: (id) => signed("m", id, MEDIA_LINK_TTL),
     };
   };
@@ -899,7 +900,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   // Signed links (download / present without a session: they work from the chat)
   // ---------------------------------------------------------------------------
 
-  const signedLink = (kind: "d" | "v") => async (req: Request, res: Response) => {
+  const signedLink = (kind: "d" | "v" | "x") => async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const o = String(req.query.o ?? "");
     const e = Number(req.query.e ?? 0);
@@ -924,18 +925,25 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       return;
     }
     try {
-      await sendPresentationHtml(serviceFor(o), id, res, kind === "d");
+      if (kind === "x") await sendPresentationPptx(serviceFor(o), ctx.previewer, id, res);
+      else await sendPresentationHtml(serviceFor(o), id, res, kind === "d");
     } catch (err) {
       if (err instanceof NotFoundError)
         res
           .status(404)
           .type("html")
           .send(messagePage(pc, "Não encontrada", "Esta apresentação não existe mais."));
+      else if (err instanceof PreviewUnavailableError)
+        res
+          .status(503)
+          .type("html")
+          .send(messagePage(pc, "PowerPoint indisponível", "Tente de novo em alguns minutos."));
       else throw err;
     }
   };
   app.get("/d/:id", signedLink("d"));
   app.get("/v/:id", signedLink("v"));
+  app.get("/x/:id", signedLink("x"));
 
   // Images of a presentation for the chat widget (signed per owner and asset).
   app.get("/m/:id", async (req: Request, res: Response) => {
@@ -1124,6 +1132,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
 
   mountEditor(app, {
     serviceFor,
+    previewer: ctx.previewer,
     auth: {
       async user(req) {
         const user = await currentUser(req as Req);

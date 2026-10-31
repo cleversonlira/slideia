@@ -44,7 +44,7 @@ Revise nomes, e-mail e links antes de enviar.
 > shows it right in the chat. Open the visual editor to change any text by hand, reorder slides or
 > swap images; the assistant sees your edits and never overwrites them. Apply your company brand
 > (colors, cover color and logo) once and every slide follows it. Present from the browser with
-> presenter view and keyboard shortcuts, or download a single offline HTML file that works
+> presenter view and keyboard shortcuts, download an editable PowerPoint file, or a single offline HTML file that works
 > anywhere. Your presentations are private to your account, and you can delete your account and all
 > its data at any time.
 
@@ -54,7 +54,7 @@ Revise nomes, e-mail e links antes de enviar.
 - See the slides in the chat and open them in the visual editor
 - Ask for edits in plain language; manual edits are preserved
 - Apply brand colors and a logo to every slide
-- Present in the browser or download a standalone HTML file
+- Present in the browser, or download an editable PowerPoint (.pptx) or a standalone HTML file
 
 ## Ferramentas e anotações
 
@@ -98,7 +98,8 @@ Positivos (devem chamar as tools e mostrar o carrossel):
    `apply_edits` com `add_slide`/`add_element` do tipo chart.
 5. "List my presentations and open the last one in the editor." → `list_presentations`,
    `open_editor`.
-6. "Give me the download link of this deck." → `render`; o link baixa um HTML offline.
+6. "Give me this deck as PowerPoint." → `render`; `pptxUrl` baixa um .pptx editável (e
+   `downloadUrl`, o HTML offline).
 
 Negativos (não devem chamar as tools de escrita):
 

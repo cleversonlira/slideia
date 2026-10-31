@@ -18,7 +18,7 @@ export interface ViewPayload {
   icons: IconMap;
   /** @font-face rules with font URLs on the SlideIA server. */
   fontCss: string;
-  links: { editor: string; present: string; download: string };
+  links: { editor: string; present: string; download: string; pptx?: string };
 }
 
 interface HostContext {
@@ -193,6 +193,7 @@ ${dots}
   <button class="btn primary" type="button" data-link="editor">${svg(ICON.edit)}Abrir no editor</button>
   <button class="btn" type="button" data-link="present">${svg(ICON.play)}Apresentar</button>
   <button class="btn" type="button" data-link="download">${svg(ICON.download)}Baixar HTML</button>
+  ${view.links.pptx ? `<button class="btn" type="button" data-link="pptx">${svg(ICON.download)}PowerPoint</button>` : ""}
 </div>`;
     this.slides = [...this.root.querySelectorAll<HTMLElement>(".stage > .slide")];
     for (const s of this.slides)
@@ -215,7 +216,8 @@ ${dots}
     for (const b of this.root.querySelectorAll<HTMLElement>("[data-link]"))
       b.addEventListener("click", () => {
         const key = b.dataset.link as keyof ViewPayload["links"];
-        if (this.view) void this.open(this.view.links[key]);
+        const url = this.view?.links[key];
+        if (url) void this.open(url);
       });
     vp.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") this.go(this.index - 1);

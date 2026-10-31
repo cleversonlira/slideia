@@ -27,6 +27,30 @@ export async function present(fromCurrent = true): Promise<void> {
   else window.open(url, "_blank");
 }
 
+/** The .pptx takes a few seconds (every slide is laid out on the server): fetched with feedback. */
+async function downloadPptx(): Promise<void> {
+  const pres = useEditor.getState().pres;
+  if (!pres) return;
+  await flush();
+  toast("Gerando o PowerPoint…");
+  try {
+    const res = await fetch(exportUrls.pptx(pres.id), { credentials: "same-origin" });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? `HTTP ${res.status}`);
+    }
+    const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1];
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name ?? "apresentacao.pptx";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  } catch (err) {
+    toast(`Não foi possível gerar o PowerPoint: ${(err as Error).message}`, "error");
+  }
+}
+
 async function download(kind: "html" | "json" | "print"): Promise<void> {
   const pres = useEditor.getState().pres;
   if (!pres) return;
@@ -111,6 +135,9 @@ export function TopBar() {
             <>
               <button type="button" onClick={() => (close(), void download("html"))}>
                 HTML (apresentação offline)
+              </button>
+              <button type="button" onClick={() => (close(), void downloadPptx())}>
+                PowerPoint (.pptx, editável)
               </button>
               <button type="button" onClick={() => (close(), void download("print"))}>
                 Imprimir / PDF
