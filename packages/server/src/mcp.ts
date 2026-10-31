@@ -159,6 +159,11 @@ export interface McpOptions {
    * the start of the message with quoted values masked (field paths and how to fix remain).
    */
   onToolCall?: (name: string, ms: number, ok: boolean, error?: string) => void;
+  /** Public view-only links of this user's presentations (remote mode only). */
+  share?: {
+    enable(id: string, fresh: boolean): Promise<string>;
+    disable(id: string): Promise<void>;
+  };
 }
 
 /** First line(s) of a tool error for logs, with anything quoted replaced by "…". */
@@ -177,6 +182,7 @@ const WRITE_TOOLS = new Set([
   "add_image",
   "render",
   "save_brand",
+  "share_presentation",
 ]);
 
 export function createMcpServer(
@@ -276,6 +282,45 @@ export function createMcpServer(
     },
     () => safely(async () => text(`${buildGuide()}\n${brandSection(await service.getBrand())}`)),
   );
+
+  const share = opts.share;
+  if (share)
+    server.registerTool(
+      "share_presentation",
+      {
+        title: "Compartilhar",
+        description:
+          "Creates (or returns) a public view-only link of a presentation, valid until disabled; anyone with the link can watch it, without an account, and always sees the latest version. Only when the user asks to share. action: enable (default), new (replaces the link; the old one stops working) or disable.",
+        inputSchema: {
+          id: z.string(),
+          action: z.enum(["enable", "new", "disable"]).optional(),
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      ({ id, action }) =>
+        safely(async () => {
+          await service.get(id);
+          if (action === "disable") {
+            await share.disable(id);
+            return text("Sharing disabled: the public link no longer works.");
+          }
+          const url = await share.enable(id, action === "new");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Public view-only link (works until disabled, shows the latest version): ${url}`,
+              },
+            ],
+            structuredContent: { shareUrl: url },
+          };
+        }),
+    );
 
   server.registerTool(
     "save_brand",

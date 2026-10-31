@@ -180,6 +180,16 @@ const MIGRATIONS: string[] = [
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
   `,
+  `
+  CREATE TABLE shares (
+    token_hash TEXT PRIMARY KEY,
+    owner TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    presentation_id TEXT NOT NULL REFERENCES presentations(id) ON DELETE CASCADE,
+    nonce TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX shares_presentation ON shares(presentation_id);
+  `,
 ];
 
 /** Applies pending migrations (idempotent; serialized with an advisory lock on real Postgres). */

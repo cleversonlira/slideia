@@ -1419,3 +1419,21 @@ kbd {
   font-size: 12px;
   text-decoration: underline;
 }
+.share-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+}
+.share-dialog p {
+  margin: 0;
+}
+.share-dialog .row input {
+  flex: 1;
+  min-width: 0;
+}
+.card .badge {
+  margin-left: 8px;
+  font-weight: 500;
+  vertical-align: middle;
+}

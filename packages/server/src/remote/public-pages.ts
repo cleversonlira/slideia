@@ -99,6 +99,7 @@ ${desktopSection(ctx, p)}
 <ul><li>A IA devolve dois links: o do <strong>editor</strong> (exige login) e o de <strong>download</strong> do HTML, que vale por ${p.linkTtlHours} horas.</li>
 <li>Para apresentar, abra o HTML e pressione <strong>F5</strong>; <strong>S</strong> abre a visão do apresentador e <strong>T</strong> testa o passador.</li>
 <li>No Claude e no ChatGPT os slides aparecem num carrossel dentro da conversa, com botões para abrir no editor, apresentar e baixar.</li>
+<li>Para mostrar a apresentação a quem não tem conta, use <strong>Compartilhar</strong> no editor (ou peça à IA): o link funciona até você desativá-lo.</li>
 <li>Você pode desconectar uma IA a qualquer momento em <a href="/conta">Minha conta</a>.</li></ul>
 <p class="muted">Algo não funcionou? Veja o <a href="/suporte">suporte</a>.</p></div>`,
     { wide: true },
@@ -143,6 +144,7 @@ export function privacyPage(ctx: PageContext, p: PublicInfo): string {
 <ul>
 <li><strong>Hostinger:</strong> hospeda o servidor, o banco de dados, as imagens e o serviço de e-mail. Atua como operador, tratando os dados apenas para prestar esses serviços.</li>
 <li><strong>Quem tiver um link de download ou de apresentação:</strong> esses links dão acesso à apresentação correspondente, sem login, por ${p.linkTtlHours} horas. Compartilhe-os com cuidado.</li>
+<li><strong>Quem tiver um link de compartilhamento:</strong> se você ativar o compartilhamento de uma apresentação, qualquer pessoa com o link pode assisti-la (sem editar), sempre na versão mais recente, até você desativar o link. Esses links não são indexados por buscadores.</li>
 <li><strong>Autoridades:</strong> quando houver obrigação legal ou ordem judicial.</li>
 </ul>
 

@@ -257,6 +257,12 @@ export class Accounts {
       },
       connectedApps: apps,
       brand: await repo.getBrand(),
+      sharedPresentations: (
+        await this.sql.query<{ presentation_id: string; created_at: unknown }>(
+          "SELECT presentation_id, created_at FROM shares WHERE owner = $1",
+          [userId],
+        )
+      ).map((r) => ({ presentation: r.presentation_id, since: r.created_at })),
       presentations,
       images,
     };

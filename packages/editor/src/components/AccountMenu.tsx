@@ -1,21 +1,32 @@
 import { useEffect, useState } from "react";
-import { api, type Account } from "../api.js";
+import { api, type Account, type Features } from "../api.js";
 import { savedTheme, setTheme, useEffectiveTheme } from "../theme.js";
 import { Icon, IconButton, Menu } from "../ui.js";
 
-let accountRequest: Promise<Account | null> | null = null;
+type Me = { account: Account | null; features: Features };
+let meRequest: Promise<Me> | null = null;
+const me = () =>
+  (meRequest ??= api.me().then(
+    (r) => ({ account: r.account, features: r.features ?? { share: false } }),
+    () => ({ account: null, features: { share: false } }),
+  ));
 
 /** Signed-in account (remote mode); null in local mode, which has no login. Fetched once. */
 function useAccount(): Account | null {
   const [account, setAccount] = useState<Account | null>(null);
   useEffect(() => {
-    accountRequest ??= api.me().then(
-      (r) => r.account,
-      () => null,
-    );
-    void accountRequest.then(setAccount);
+    void me().then((r) => setAccount(r.account));
   }, []);
   return account;
+}
+
+/** What this server offers (e.g. public links only in remote mode). */
+export function useFeatures(): Features {
+  const [features, setFeatures] = useState<Features>({ share: false });
+  useEffect(() => {
+    void me().then((r) => setFeatures(r.features));
+  }, []);
+  return features;
 }
 
 async function signOut(): Promise<void> {

@@ -3,7 +3,7 @@ import { navigate } from "../router.js";
 import { flush, resolveKeepMine, resolveReload } from "../sync.js";
 import { mutate, redo, toast, undo, useEditor, type SaveStatus } from "../state.js";
 import { IconButton, Menu, TextInput } from "../ui.js";
-import { AccountMenu } from "./AccountMenu.js";
+import { AccountMenu, useFeatures } from "./AccountMenu.js";
 
 const STATUS: Record<SaveStatus, { label: string; cls: string }> = {
   loading: { label: "Carregando…", cls: "muted" },
@@ -68,6 +68,7 @@ export function TopBar() {
   const canUndo = useEditor((s) => s.past.length > 0);
   const canRedo = useEditor((s) => s.future.length > 0);
   const mode = useEditor((s) => s.mode);
+  const features = useFeatures();
   const st = STATUS[status];
   return (
     <>
@@ -124,6 +125,15 @@ export function TopBar() {
           label="Atalhos"
           onClick={() => useEditor.setState({ dialog: "help" })}
         />
+        {features.share && (
+          <button
+            type="button"
+            className="btn"
+            onClick={() => useEditor.setState({ dialog: "share" })}
+          >
+            Compartilhar
+          </button>
+        )}
         <Menu
           trigger={(open) => (
             <button type="button" className="btn" onClick={open}>

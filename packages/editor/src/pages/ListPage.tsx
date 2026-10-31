@@ -105,7 +105,14 @@ export function ListPage() {
                 ) : (
                   <div className="thumb placeholder" style={{ width: 300, height: 169 }} />
                 )}
-                <strong>{p.title}</strong>
+                <strong>
+                  {p.title}
+                  {p.shared && (
+                    <span className="badge" title="Tem link de compartilhamento ativo">
+                      Compartilhada
+                    </span>
+                  )}
+                </strong>
                 <span className="muted">
                   {p.slides} slides · {fmt.format(new Date(p.updatedAt))}
                 </span>

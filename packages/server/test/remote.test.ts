@@ -607,6 +607,83 @@ describe("OAuth + MCP with the official SDK client", () => {
     await c2.close();
   });
 
+  it("shares a view-only public link until it is disabled", async () => {
+    const created = (await client.callTool({
+      name: "create_presentation",
+      arguments: {
+        presentation: {
+          meta: { title: "Compartilhada" },
+          slides: [{ layout: "cover", elements: [{ type: "title", text: "Para todos verem" }] }],
+        },
+      },
+    })) as ToolResult;
+    const id = (created.structuredContent as { id: string }).id;
+    const write = { "content-type": "application/json", "x-apresenta": "1" };
+
+    expect(await (await browser.fetch(`${base}/api/me`)).json()).toMatchObject({
+      features: { share: true },
+    });
+    expect(await (await browser.fetch(`${base}/api/presentations/${id}/share`)).json()).toEqual({
+      url: null,
+    });
+    const on = (await (
+      await browser.fetch(`${base}/api/presentations/${id}/share`, {
+        method: "POST",
+        headers: write,
+        body: "{}",
+      })
+    ).json()) as { url: string };
+    expect(on.url).toMatch(new RegExp(`^${base}/s/[A-Za-z0-9_-]{26}$`));
+    // Same link when enabled again; listed as shared.
+    const again = await browser.fetch(`${base}/api/presentations/${id}/share`, {
+      method: "POST",
+      headers: write,
+      body: "{}",
+    });
+    expect(((await again.json()) as { url: string }).url).toBe(on.url);
+    const list = (await (await browser.fetch(`${base}/api/presentations`)).json()) as {
+      presentations: Array<{ id: string; shared?: boolean }>;
+    };
+    expect(list.presentations.find((p) => p.id === id)?.shared).toBe(true);
+
+    // Anyone with the link watches it, without a session; not indexed.
+    const view = await fetch(on.url);
+    expect(view.status).toBe(200);
+    expect(view.headers.get("x-robots-tag")).toContain("noindex");
+    // The exported HTML brings its own hash-based CSP; the site's would block the player.
+    expect(view.headers.get("content-security-policy")).toBeNull();
+    expect(await view.text()).toContain("Para todos verem");
+    expect((await fetch(`${base}/s/${"x".repeat(26)}`)).status).toBe(404);
+
+    // Another account cannot share or see this one.
+    const other = new Browser();
+    await signupAndVerify(other, "daniel@exemplo.com");
+    expect(
+      (
+        await other.fetch(`${base}/api/presentations/${id}/share`, {
+          method: "POST",
+          headers: write,
+          body: "{}",
+        })
+      ).status,
+    ).toBe(404);
+
+    // From the chat: a new link replaces the old one; disabling turns it off.
+    const fresh = (await client.callTool({
+      name: "share_presentation",
+      arguments: { id, action: "new" },
+    })) as ToolResult;
+    const freshUrl = (fresh.structuredContent as { shareUrl: string }).shareUrl;
+    expect(freshUrl).not.toBe(on.url);
+    expect((await fetch(on.url)).status).toBe(404);
+    expect((await fetch(freshUrl)).status).toBe(200);
+    await client.callTool({ name: "share_presentation", arguments: { id, action: "disable" } });
+    expect((await fetch(freshUrl)).status).toBe(404);
+
+    const robots = await (await fetch(`${base}/robots.txt`)).text();
+    expect(robots).toContain("Disallow: /s/");
+  });
+
   it("rotates refresh tokens and revokes the family on reuse", async () => {
     const clientId = String(provider.info!.client_id);
     const refresh = provider.saved!.refresh_token!;

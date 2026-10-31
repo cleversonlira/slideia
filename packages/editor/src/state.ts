@@ -4,7 +4,7 @@ import { applyOps, PresentationError, type Operation, type Presentation } from "
 export type SaveStatus =
   "loading" | "saved" | "dirty" | "saving" | "offline" | "conflict" | "error";
 export type Panel = "slide" | "element" | "deck";
-export type Dialog = null | "find" | "history" | "layouts" | "image" | "help";
+export type Dialog = null | "find" | "history" | "layouts" | "image" | "help" | "share";
 
 export interface Toast {
   id: number;

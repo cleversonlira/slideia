@@ -36,7 +36,10 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("sign up, verify e-mail and create a presentation in the editor", async ({ page }, info) => {
+test("sign up, verify e-mail and create a presentation in the editor", async ({
+  page,
+  browser,
+}, info) => {
   await page.goto(base);
   // Anonymous visitors of the root see the landing page.
   await expect(
@@ -68,6 +71,23 @@ test("sign up, verify e-mail and create a presentation in the editor", async ({ 
   await page.reload();
   await expect(page.locator(".editor-stage .el-title")).toContainText("Nova apresentação remota");
   await page.screenshot({ path: info.outputPath("editor.png") });
+
+  // Share: a public link that someone without an account can watch.
+  await page.getByRole("button", { name: "Compartilhar" }).click();
+  await page.getByRole("button", { name: "Criar link" }).click();
+  const link = page.getByRole("textbox", { name: "Link de compartilhamento" });
+  await expect(link).toHaveValue(/\/s\/[A-Za-z0-9_-]{26}$/);
+  const url = await link.inputValue();
+  await page.locator(".modal").screenshot({ path: info.outputPath("share.png") });
+  const guest = await browser.newContext();
+  const view = await guest.newPage();
+  await view.goto(url);
+  await expect(view.locator(".stage > .slide").first()).toContainText("Nova apresentação remota");
+  await page.getByRole("button", { name: "Desativar link" }).click();
+  await expect(page.getByRole("button", { name: "Criar link" })).toBeVisible();
+  await view.reload();
+  await expect(view.getByRole("heading", { name: "Link indisponível" })).toBeVisible();
+  await guest.close();
 });
 
 test("OAuth consent screen authorizes an app and the account page lists it", async ({

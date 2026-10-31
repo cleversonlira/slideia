@@ -13,7 +13,8 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
 - Fase 4: páginas públicas, **widget no chat (MCP Apps)** e marca da empresa no tema feitos;
   material de submissão em `docs/SUBMISSAO.md` (falta enviar); `.mcpb` para o Claude Desktop
   (`pnpm mcpb`); exportação para PowerPoint editável (`server/src/pptx.ts`); marca salva na conta
-  (`save_brand`, aplicada às apresentações novas).
+  (`save_brand`, aplicada às apresentações novas); link público de visualização no remoto
+  (`remote/shares.ts`, `/s/<token>`).
 - Produção: **https://slideia.site** (MCP em `/mcp`) numa VPS própria, via `deploy/vps/` (Docker
   Compose + Postgres atrás do nginx do host, TLS pelo certbot, backup diário). E-mail por SMTP da
   Hostinger (`suporte@slideia.site`, `deploy/vps/set-smtp.sh`). Alertas por e-mail via
@@ -31,7 +32,7 @@ decisões: `docs/ARQUITETURA.md`. Especificação original: `prompt-ferramenta-a
   `dist/widget.js`, HTML montado por `buildWidgetHtml` em `src/node/widget.ts`).
 - `packages/server` — serviço (`service.ts`: criar, `apply` com rebase/conflito, histórico,
   imagens, `get_changes`), armazenamento SQLite (`node:sqlite`, WAL, vários processos), MCP
-  (`mcp.ts`, 11 tools + prompts + resources; SDK `@modelcontextprotocol/server` v2, protocolo
+  (`mcp.ts`, 11 tools, 12 no remoto, + prompts + resources; SDK `@modelcontextprotocol/server` v2, protocolo
   2026-07-28 e 2025-era), API HTTP do editor (`http.ts`: token → cookie,
   CSRF por cabeçalho `x-apresenta`, proteção de Host, SSE), preview e exportação .pptx com Chrome
   headless (`playwright-core`; `pptx.ts`, `pptx-scan.ts`), download de imagens com proteção SSRF (`images.ts`). Entrada: `stdio.ts`;

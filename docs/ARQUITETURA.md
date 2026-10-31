@@ -691,3 +691,16 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
   apresentação (`fromPresentation`, via `brandOf`) ou dos campos, e `clear: true` esquece.
 - Editor: aba Apresentação → Marca → "Minha marca" (salvar a desta apresentação, aplicar a salva,
   esquecer). API `GET/PUT/DELETE /api/brand`.
+
+## 25. Link de compartilhamento (modo remoto)
+
+- Um link público só de visualização por apresentação, `/s/<token>`, válido até o dono desativar;
+  mostra sempre a versão atual (o mesmo HTML exportado, com a CSP por hash dele: `/s/` fica fora da
+  CSP do site, como `/d/` e `/v/`). `X-Robots-Tag: noindex` e `robots.txt` bloqueiam buscadores.
+- `remote/shares.ts`: o token não é guardado; é `HMAC(chave do servidor, id + nonce)` truncado (26
+  caracteres base64url). A tabela `shares` (migração 3) guarda o nonce e o SHA-256 do token para a
+  busca, com `ON DELETE CASCADE` na apresentação e no usuário. "Gerar novo link" troca o nonce.
+- Editor: botão **Compartilhar** (só quando `/api/me` diz `features.share`), selo "Compartilhada" na
+  lista; API `GET/POST/DELETE /api/presentations/:id/share` (POST `{fresh: true}` troca o link),
+  sempre depois de conferir o dono. IA: tool `share_presentation` (`enable`/`new`/`disable`),
+  registrada só no remoto. A exportação LGPD lista as apresentações compartilhadas.

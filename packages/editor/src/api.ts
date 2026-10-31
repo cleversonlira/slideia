@@ -39,6 +39,8 @@ export interface PresentationSummary {
   slides: number;
   theme: string;
   updatedAt: string;
+  /** Has a public view-only link (remote mode). */
+  shared?: boolean;
 }
 
 export interface VersionInfo {
@@ -54,8 +56,17 @@ export interface Account {
   name: string | null;
 }
 
+export interface Features {
+  /** Public view-only links (remote mode only). */
+  share: boolean;
+}
+
 export const api = {
-  me: () => req<{ account: Account | null }>("GET", "/api/me"),
+  me: () => req<{ account: Account | null; features?: Features }>("GET", "/api/me"),
+  share: (id: string) => req<{ url: string | null }>("GET", `/api/presentations/${id}/share`),
+  enableShare: (id: string, fresh = false) =>
+    req<{ url: string }>("POST", `/api/presentations/${id}/share`, { fresh }),
+  disableShare: (id: string) => req<void>("DELETE", `/api/presentations/${id}/share`),
   list: () => req<{ presentations: PresentationSummary[] }>("GET", "/api/presentations"),
   get: (id: string) => req<{ presentation: Presentation }>("GET", `/api/presentations/${id}`),
   create: (title?: string) =>

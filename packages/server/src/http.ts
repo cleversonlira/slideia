@@ -24,12 +24,22 @@ export interface EditorAuth {
   account?(req: Request): Promise<{ email: string; name: string | null } | null>;
 }
 
+/** Public view-only links (remote mode). Calls come after the ownership check. */
+export interface ShareLinks {
+  get(owner: string, id: string): Promise<string | null>;
+  enable(owner: string, id: string, fresh?: boolean): Promise<string>;
+  disable(owner: string, id: string): Promise<void>;
+  sharedIds(owner: string): Promise<Set<string>>;
+}
+
 export interface EditorOptions {
   auth: EditorAuth;
   /** Service scoped to a user. */
   serviceFor(userId: string): PresentationService;
   /** Headless browser for the PowerPoint export. */
   previewer: Previewer;
+  /** Public links; absent in local mode (the editor hides "Compartilhar"). */
+  share?: ShareLinks | undefined;
   editorDist?: string | undefined;
 }
 
@@ -144,7 +154,10 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
   api.get(
     "/me",
     withService(async (req, res) => {
-      res.json({ account: auth.account ? await auth.account(req) : null });
+      res.json({
+        account: auth.account ? await auth.account(req) : null,
+        features: { share: !!opts.share },
+      });
     }),
   );
 
@@ -175,14 +188,44 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
   api.get(
     "/presentations",
     withService(async (req, res, svc) => {
+      const rows = await svc.list(typeof req.query.q === "string" ? req.query.q : undefined, 200);
+      const shared = opts.share ? await opts.share.sharedIds(svc.repo.owner) : new Set<string>();
       res.json({
-        presentations: await svc.list(
-          typeof req.query.q === "string" ? req.query.q : undefined,
-          200,
-        ),
+        presentations: rows.map((r) => (shared.has(r.id) ? { ...r, shared: true } : r)),
       });
     }),
   );
+
+  if (opts.share) {
+    const share = opts.share;
+    api.get(
+      "/presentations/:id/share",
+      withService(async (req, res, svc) => {
+        const id = String(req.params.id);
+        await svc.get(id);
+        res.json({ url: await share.get(svc.repo.owner, id) });
+      }),
+    );
+    api.post(
+      "/presentations/:id/share",
+      json,
+      withService(async (req, res, svc) => {
+        const id = String(req.params.id);
+        await svc.get(id);
+        const fresh = (req.body as { fresh?: unknown } | undefined)?.fresh === true;
+        res.json({ url: await share.enable(svc.repo.owner, id, fresh) });
+      }),
+    );
+    api.delete(
+      "/presentations/:id/share",
+      withService(async (req, res, svc) => {
+        const id = String(req.params.id);
+        await svc.get(id);
+        await share.disable(svc.repo.owner, id);
+        res.status(204).end();
+      }),
+    );
+  }
 
   api.post(
     "/presentations",

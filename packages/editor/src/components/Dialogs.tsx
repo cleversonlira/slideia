@@ -63,6 +63,115 @@ export function FindReplace({ onClose }: { onClose: () => void }) {
   );
 }
 
+/** Public view-only link of the presentation: create, copy, replace or disable. */
+export function ShareDialog({ onClose }: { onClose: () => void }) {
+  const pres = useEditor((s) => s.pres)!;
+  const [url, setUrl] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api.share(pres.id).then(
+      (r) => setUrl(r.url),
+      (err: unknown) => toast((err as Error).message, "error"),
+    );
+  }, [pres.id]);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    try {
+      await fn();
+    } catch (err) {
+      toast(`Não foi possível alterar o compartilhamento: ${(err as Error).message}`, "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copy = async (link: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast("Link copiado");
+    } catch {
+      toast("Copie o link selecionando o texto.", "error");
+    }
+  };
+  return (
+    <Modal title="Compartilhar" onClose={onClose}>
+      <div className="share-dialog">
+        {url === undefined && <p className="muted">Carregando…</p>}
+        {url === null && (
+          <>
+            <p>
+              Crie um link para quem não tem conta assistir à apresentação no navegador. Ninguém
+              consegue editar, e o link mostra sempre a versão mais recente.
+            </p>
+            <button
+              type="button"
+              className="primary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  const r = await api.enableShare(pres.id);
+                  setUrl(r.url);
+                  await copy(r.url);
+                })
+              }
+            >
+              Criar link
+            </button>
+          </>
+        )}
+        {url && (
+          <>
+            <p>Qualquer pessoa com este link pode assistir (sem editar), até você desativá-lo.</p>
+            <div className="row">
+              <input
+                type="text"
+                readOnly
+                value={url}
+                aria-label="Link de compartilhamento"
+                onFocus={(e) => e.target.select()}
+              />
+              <button type="button" className="primary" onClick={() => void copy(url)}>
+                Copiar
+              </button>
+            </div>
+            <div className="row wrap">
+              <button type="button" onClick={() => window.open(url, "_blank", "noreferrer")}>
+                Abrir
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    if (!window.confirm("Gerar um novo link? O atual para de funcionar.")) return;
+                    setUrl((await api.enableShare(pres.id, true)).url);
+                    toast("Novo link criado; o anterior foi desativado.");
+                  })
+                }
+              >
+                Gerar novo link
+              </button>
+              <button
+                type="button"
+                className="danger"
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    await api.disableShare(pres.id);
+                    setUrl(null);
+                    toast("Compartilhamento desativado.");
+                  })
+                }
+              >
+                Desativar link
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 export function History({ onClose }: { onClose: () => void }) {
   const pres = useEditor((s) => s.pres)!;
   const [versions, setVersions] = useState<VersionInfo[] | null>(null);

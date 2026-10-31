@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "../api.js";
 import { Canvas } from "../components/Canvas.js";
-import { FindReplace, Help, History } from "../components/Dialogs.js";
+import { FindReplace, Help, History, ShareDialog } from "../components/Dialogs.js";
 import { ImageDialog } from "../components/ImageDialog.js";
 import { LayoutPicker } from "../components/LayoutPicker.js";
 import { Notes } from "../components/Notes.js";
@@ -136,6 +136,7 @@ export function EditorPage({ id, slide }: { id: string; slide?: number | undefin
       {dialog === "find" && <FindReplace onClose={close} />}
       {dialog === "history" && <History onClose={close} />}
       {dialog === "help" && <Help onClose={close} />}
+      {dialog === "share" && <ShareDialog onClose={close} />}
     </div>
   );
 }

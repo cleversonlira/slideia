@@ -37,6 +37,7 @@ import {
   type PublicInfo,
 } from "./public-pages.js";
 import { PgPresentationRepo } from "./pg-repo.js";
+import { Shares } from "./shares.js";
 import type { Sql } from "./sql.js";
 
 export interface RemoteContext {
@@ -143,6 +144,12 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     };
   };
 
+  const shares = new Shares(ctx.sql, ctx.signingKey, config.publicUrl);
+  const shareFor = (owner: string) => ({
+    enable: (id: string, fresh: boolean) => shares.enable(owner, id, fresh),
+    disable: (id: string) => shares.disable(owner, id),
+  });
+
   const serviceFor = (owner: string) =>
     new PresentationService(
       new PgPresentationRepo(ctx.sql, ctx.blobs, owner),
@@ -164,7 +171,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
     res.setHeader("Referrer-Policy", "no-referrer");
     if (secure) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     // Exported presentations carry their own (hash-based) CSP; everything else gets this one.
-    const exported = /^\/(?:d|v)\//.test(req.path) || /\/export\.html$/.test(req.path);
+    const exported = /^\/(?:d|v|s)\//.test(req.path) || /\/export\.html$/.test(req.path);
     if (
       !exported &&
       !req.path.startsWith("/mcp") &&
@@ -945,6 +952,39 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   app.get("/v/:id", signedLink("v"));
   app.get("/x/:id", signedLink("x"));
 
+  // Public view-only links (enabled per presentation by its owner).
+  app.get("/s/:token", async (req, res, next) => {
+    try {
+      const found = await shares.resolve(String(req.params.token));
+      res.setHeader("X-Robots-Tag", "noindex, nofollow");
+      res.setHeader("Referrer-Policy", "no-referrer");
+      if (!found) {
+        res
+          .status(404)
+          .type("html")
+          .send(
+            messagePage(
+              pc,
+              "Link indisponível",
+              "Este link de compartilhamento foi desativado ou não existe. Peça um novo a quem o enviou.",
+            ),
+          );
+        return;
+      }
+      await sendPresentationHtml(serviceFor(found.owner), found.id, res, false);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/robots.txt", (_req, res) => {
+    res
+      .type("text/plain")
+      .send(
+        "User-agent: *\nDisallow: /s/\nDisallow: /d/\nDisallow: /v/\nDisallow: /x/\nDisallow: /p/\nDisallow: /api/\nDisallow: /oauth/\n",
+      );
+  });
+
   // Images of a presentation for the chat widget (signed per owner and asset).
   app.get("/m/:id", async (req: Request, res: Response) => {
     const id = String(req.params.id);
@@ -1039,6 +1079,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
       if (!authInfo || typeof userId !== "string") throw new Error("MCP request without auth");
       return createMcpServer(serviceFor(userId), ctx.previewer, {
         canWrite: authInfo.scopes.includes("presentations:write"),
+        share: shareFor(userId),
         onToolCall: (name, ms, ok, error) => {
           metrics.tool(name, ms, ok);
           log("tool", {
@@ -1058,7 +1099,10 @@ export function createRemoteApp(ctx: RemoteContext): Express {
 
   /** Surface fingerprint vs. the previous deploy (null if it cannot be computed). */
   const listChanges: Promise<ListChanges | null> = (async () => {
-    const server = createMcpServer(serviceFor("_surface"), ctx.previewer, { canWrite: true });
+    const server = createMcpServer(serviceFor("_surface"), ctx.previewer, {
+      canWrite: true,
+      share: shareFor("_surface"),
+    });
     return ListChanges.init(ctx.sql, fingerprint(await publishedSurface(server)));
   })().catch((err: unknown) => {
     console.error("[mcp] list change detection disabled:", err);
@@ -1133,6 +1177,7 @@ export function createRemoteApp(ctx: RemoteContext): Express {
   mountEditor(app, {
     serviceFor,
     previewer: ctx.previewer,
+    share: shares,
     auth: {
       async user(req) {
         const user = await currentUser(req as Req);
