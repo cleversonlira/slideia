@@ -340,8 +340,7 @@ class SqlitePresentationRepo implements PresentationRepo {
 
   async getBrand(): Promise<unknown> {
     const r = this.db.prepare("SELECT doc FROM brands WHERE owner = ?").get(this.owner) as
-      | Row
-      | undefined;
+      Row | undefined;
     return r ? (JSON.parse(String(r.doc)) as unknown) : null;
   }
 

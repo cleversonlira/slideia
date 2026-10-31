@@ -480,10 +480,7 @@ export function brandOf(meta: Meta): Brand {
 }
 
 /** `meta` with the brand applied: its base theme (when set) and its overrides. */
-export function withBrand<M extends object>(
-  meta: M,
-  brand: Brand,
-): M {
+export function withBrand<M extends object>(meta: M, brand: Brand): M {
   const { theme, ...overrides } = brand;
   return { ...meta, ...(theme ? { theme } : {}), themeOverrides: overrides };
 }

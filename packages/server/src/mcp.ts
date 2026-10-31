@@ -274,8 +274,7 @@ export function createMcpServer(
         "Returns the presentation format (layouts, elements, themes, transitions), design rules, editing operations and how to match the look of an existing deck (pptx). Call it once before creating or editing presentations.",
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    () =>
-      safely(async () => text(`${buildGuide()}\n${brandSection(await service.getBrand())}`)),
+    () => safely(async () => text(`${buildGuide()}\n${brandSection(await service.getBrand())}`)),
   );
 
   server.registerTool(
