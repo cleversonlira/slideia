@@ -123,6 +123,9 @@ describe("MCP tools", () => {
     const r = await call("get_guide");
     expect(r.content[0]!.text).toContain("- two-columns —");
     expect(r.content[0]!.text).toContain("update_text{slide,element,text}");
+    // Recreating the look of a deck the user attached (pptx theme colors, fonts, logo).
+    expect(r.content[0]!.text).toContain("## Matching an existing deck");
+    expect(r.content[0]!.text).toContain("playfair-display");
   });
 
   it("creates, reads, edits and describes manual changes", async () => {

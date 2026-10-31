@@ -1,4 +1,4 @@
-import { LAYOUTS, THEMES, TRANSITION_TYPES } from "@slideia/core";
+import { FONT_IDS, LAYOUTS, THEMES, TRANSITION_TYPES } from "@slideia/core";
 
 /** Design rules shared by get_guide, the MCP prompt and the design-guide resource. */
 export const DESIGN_RULES = `## Design rules
@@ -11,6 +11,15 @@ export const DESIGN_RULES = `## Design rules
 - Reveal list items step by step with animation {"type":"rise","by":"paragraph"} only where suspense helps.
 - Always write speaker notes: what to say on the slide, 2–4 sentences.
 - Write in the audience's language (meta.lang). Brazilian Portuguese by default.`;
+
+/** How to reproduce the look of a deck the user already has (pptx, pdf, template). */
+export const MATCH_EXISTING = `## Matching an existing deck (pptx, potx, pdf, Google Slides export)
+When the user asks to follow the look of a file they attached, extract its identity first (run code if you can) and map it; do not just pick a theme by eye.
+1. Colors: in a .pptx/.potx read ppt/theme/theme1.xml <a:clrScheme>: accent1 → "accent", accent2 → "accent2"; the dark color used on title/section slides (often dk2 or the cover background) → "cover". Pick the base theme whose light/dark matches the body slides.
+2. Fonts: <a:majorFont>/<a:minorFont> (heading/body). Available ids: ${FONT_IDS.join(", ")}. Use the same family if listed, otherwise the closest: Calibri/Arial/Helvetica/Segoe UI → inter or source-sans-3; Aptos → dm-sans; Gotham/Proxima Nova → montserrat; Futura/Century Gothic → poppins; Georgia/Cambria/Times → source-serif-4 or lora; Garamond/Didot/Bodoni → playfair-display.
+3. Logo: take it from ppt/media (the image repeated on most slides or on the master). Send it with add_image as a data URI (PNG/WebP; convert EMF/WMF/SVG to PNG first) and use the "asset:<id>" in themeOverrides.logo; match its corner. If you cannot extract it, ask the user to upload it in the editor (Apresentação → Marca).
+4. Structure: map every source slide to the closest layout (title slide → cover, divider → section, bullets → title-content, side-by-side → two-columns/comparison, picture + text → image-text, KPIs → stats, dates → timeline, graphs → chart with the real numbers, grids → table). Keep the order, texts and speaker notes; split overcrowded slides.
+5. Tell the user what could not be reproduced: free positioning, decorative shapes, bars and footers drawn in the master, fonts replaced by a similar one. Layouts use slots, never x/y coordinates; a full-bleed picture can become an image background.`;
 
 const MARKDOWN = `## Text fields (Markdown)
 Every text field accepts Markdown: **bold**, *italic*, ~~strike~~, ++underline++, ==highlight==, [link](https://…), [text]{color=accent} (tokens: text muted accent accent2 highlight success danger, or #hex), ^sup^, ~sub~.
@@ -51,6 +60,7 @@ export function buildGuide(): string {
 { "meta": { "title", "author"?, "lang" (default "pt-BR"), "aspectRatio" ("16:9"|"4:3"), "theme", "themeOverrides"? {…}, "defaultTransition" {type, direction?, durationMs?} },
   "slides": [ { "layout", "variant"?, "elements": [ … ], "background"?, "transition"?, "notes"? } ] }
 Company brand (when the user gives colors or a logo): pick the closest theme, then "themeOverrides": { "accent": "#main", "accent2"?: "#secondary", "cover"?: "#dark brand color for cover/section/closing backgrounds", "fontHeading"?, "fontBody"?, "logo"?: { "asset": "https://…/logo.png" (transparent PNG/WebP; SVG is not accepted), "assetOnDark"?: white variant for dark slides, "alt", "position"? bottom-right|bottom-left|top-right|top-left, "size"? s|m|l } }. The logo appears on every slide inside the margin; do not also add it as an image element (except a bigger one on the cover, in the "logo" slot).
+To copy the look of a file the user has, see "Matching an existing deck" below.
 Ids are optional when creating. "slot" is optional when the element type fits only one free slot (elements fill slots in order).
 
 ## Elements (field "type")
@@ -78,6 +88,8 @@ Transitions: ${TRANSITION_TYPES.join(", ")}; direction left|right|up|down; durat
 ${MARKDOWN}
 
 ${DESIGN_RULES}
+
+${MATCH_EXISTING}
 
 ## Editing (apply_edits)
 Send several operations in one call with the expectedVersion you last saw. Slides can be referenced by id or 1-based number (numbers refer to the state before the batch). Operations:

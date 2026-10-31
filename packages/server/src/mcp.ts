@@ -250,7 +250,7 @@ export function createMcpServer(
     {
       title: "Guia de criação",
       description:
-        "Returns the presentation format (layouts, elements, themes, transitions), design rules and editing operations. Call it once before creating or editing presentations.",
+        "Returns the presentation format (layouts, elements, themes, transitions), design rules, editing operations and how to match the look of an existing deck (pptx). Call it once before creating or editing presentations.",
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     () => text(buildGuide()),
