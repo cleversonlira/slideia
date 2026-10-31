@@ -72,6 +72,10 @@ export interface PresentationRepo {
   getAsset(id: string): Promise<{ mime: string; data: Uint8Array } | null>;
   /** Total bytes of stored images. */
   assetBytes(): Promise<number>;
+  /** The owner's saved brand (JSON validated by the service), or null. */
+  getBrand(): Promise<unknown>;
+  /** Saves (or, with null, forgets) the brand. */
+  setBrand(brand: unknown): Promise<void>;
   /** Everything this owner stored (account deletion). */
   deleteAll(): Promise<void>;
 }

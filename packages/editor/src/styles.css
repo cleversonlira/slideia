@@ -1405,3 +1405,17 @@ kbd {
   font-style: normal;
   line-height: 40px;
 }
+.saved-brand-ok {
+  font-size: 13px;
+  color: var(--ui-ok, #15803d);
+}
+.props-section .link-btn {
+  align-self: flex-start;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ui-muted);
+  font-size: 12px;
+  text-decoration: underline;
+}

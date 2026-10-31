@@ -677,3 +677,17 @@ Posicionamento livre de elementos; formas e setas; exportar PPTX e PDF nativo no
 - Rotas: editor `GET /api/presentations/:id/export.pptx`; remoto, link assinado `/x/:id` (como `/d/`
   e `/v/`). A tool `render` devolve `pptxUrl`; o widget mostra "PowerPoint". No máximo 2 exportações
   montadas ao mesmo tempo por processo (`Previewer.MAX_SCANS`).
+
+## 24. Marca salva na conta
+
+- `Brand` (core) = tema base opcional + os campos de `ThemeOverrides`. Uma por conta, na tabela
+  `brands` (SQLite local; Postgres, migração 2, apagada junto com a conta e incluída na exportação
+  LGPD). O serviço valida ao ler e ao salvar (`parseBrand`, erros com caminho `brand.*`) e baixa o
+  logo como imagem da conta (`internalizeImages`).
+- `PresentationService.create` aplica a marca quando a entrada não traz `meta.themeOverrides`
+  (`{}` explícito = tema puro) e avisa a IA nas notas. Vale para a IA, para "Nova apresentação" no
+  editor e para quem usa a API; importações e duplicações mantêm o que vier.
+- IA: `get_guide` termina com a marca do usuário (ou "nenhuma"); `save_brand` salva a partir de uma
+  apresentação (`fromPresentation`, via `brandOf`) ou dos campos, e `clear: true` esquece.
+- Editor: aba Apresentação → Marca → "Minha marca" (salvar a desta apresentação, aplicar a salva,
+  esquecer). API `GET/PUT/DELETE /api/brand`.

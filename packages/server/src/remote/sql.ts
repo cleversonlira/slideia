@@ -173,6 +173,13 @@ const MIGRATIONS: string[] = [
     value TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE brands (
+    owner TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    doc JSON NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  `,
 ];
 
 /** Applies pending migrations (idempotent; serialized with an advisory lock on real Postgres). */

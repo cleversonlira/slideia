@@ -81,6 +81,11 @@ export class SqliteDatabase {
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS assets_sha ON assets(owner, sha256);
+      CREATE TABLE IF NOT EXISTS brands (
+        owner TEXT PRIMARY KEY,
+        doc TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   }
 
@@ -333,6 +338,25 @@ class SqlitePresentationRepo implements PresentationRepo {
     return Number(r.n);
   }
 
+  async getBrand(): Promise<unknown> {
+    const r = this.db.prepare("SELECT doc FROM brands WHERE owner = ?").get(this.owner) as
+      | Row
+      | undefined;
+    return r ? (JSON.parse(String(r.doc)) as unknown) : null;
+  }
+
+  async setBrand(brand: unknown): Promise<void> {
+    await this.s.write(async () => {
+      if (brand === null) this.db.prepare("DELETE FROM brands WHERE owner = ?").run(this.owner);
+      else
+        this.db
+          .prepare(
+            "INSERT INTO brands (owner, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT (owner) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
+          )
+          .run(this.owner, JSON.stringify(brand), new Date().toISOString());
+    });
+  }
+
   async deleteAll(): Promise<void> {
     const assets = this.db
       .prepare("SELECT id, mime FROM assets WHERE owner = ?")
@@ -340,6 +364,7 @@ class SqlitePresentationRepo implements PresentationRepo {
     await this.s.write(async () => {
       this.db.prepare("DELETE FROM presentations WHERE owner = ?").run(this.owner);
       this.db.prepare("DELETE FROM assets WHERE owner = ?").run(this.owner);
+      this.db.prepare("DELETE FROM brands WHERE owner = ?").run(this.owner);
     });
     for (const a of assets) await this.s.blobs.delete(assetKey(String(a.id), String(a.mime)));
   }

@@ -256,6 +256,7 @@ export class Accounts {
         emailVerified: user.emailVerified,
       },
       connectedApps: apps,
+      brand: await repo.getBrand(),
       presentations,
       images,
     };

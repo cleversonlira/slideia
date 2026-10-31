@@ -1,4 +1,4 @@
-import type { DesignWarning, Presentation } from "@slideia/core";
+import type { Brand, DesignWarning, Presentation } from "@slideia/core";
 
 export class ApiError extends Error {
   constructor(
@@ -81,6 +81,9 @@ export const api = {
     req<{ presentation: Presentation }>("POST", `/api/presentations/${id}/restore`, { version }),
   uploadImage: (file: Blob) =>
     req<{ asset: string; width: number; height: number }>("POST", "/api/assets", undefined, file),
+  brand: () => req<{ brand: Brand | null }>("GET", "/api/brand"),
+  saveBrand: (brand: Brand) => req<{ brand: Brand }>("PUT", "/api/brand", { brand }),
+  forgetBrand: () => req<void>("DELETE", "/api/brand"),
   imageFromUrl: (url: string) =>
     req<{ asset: string; width: number; height: number }>("POST", "/api/assets", { url }),
 };

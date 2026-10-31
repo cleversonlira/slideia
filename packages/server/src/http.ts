@@ -148,6 +148,30 @@ export function mountEditor(app: Express, opts: EditorOptions): void {
     }),
   );
 
+  // The account's saved brand, applied to new presentations.
+  api.get(
+    "/brand",
+    withService(async (_req, res, svc) => {
+      res.json({ brand: await svc.getBrand() });
+    }),
+  );
+
+  api.put(
+    "/brand",
+    json,
+    withService(async (req, res, svc) => {
+      res.json({ brand: await svc.saveBrand((req.body as { brand?: unknown }).brand ?? {}) });
+    }),
+  );
+
+  api.delete(
+    "/brand",
+    withService(async (_req, res, svc) => {
+      await svc.saveBrand(null);
+      res.status(204).end();
+    }),
+  );
+
   api.get(
     "/presentations",
     withService(async (req, res, svc) => {

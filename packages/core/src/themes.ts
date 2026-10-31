@@ -1,6 +1,7 @@
 import { contrastRatio, isHex, mixHex, normalizeHex } from "./color.js";
 import type {
   Background,
+  Brand,
   ColorRef,
   ColorToken,
   FontId,
@@ -464,4 +465,25 @@ export function slideTone(
   return contrastRatio(theme.colors.text, color) >= contrastRatio(theme.colors.inverseText, color)
     ? "base"
     : "inverse";
+}
+
+// ---------------------------------------------------------------------------
+// Saved brand (account level)
+// ---------------------------------------------------------------------------
+
+/** The theme fields of a presentation that make up its brand. */
+export function brandOf(meta: Meta): Brand {
+  const out: Brand = { theme: meta.theme };
+  for (const [k, v] of Object.entries(meta.themeOverrides ?? {}))
+    if (v !== undefined) (out as Record<string, unknown>)[k] = v;
+  return out;
+}
+
+/** `meta` with the brand applied: its base theme (when set) and its overrides. */
+export function withBrand<M extends object>(
+  meta: M,
+  brand: Brand,
+): M {
+  const { theme, ...overrides } = brand;
+  return { ...meta, ...(theme ? { theme } : {}), themeOverrides: overrides };
 }

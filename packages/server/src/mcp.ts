@@ -8,9 +8,11 @@ import {
   PresentationInputSchema,
   THEME_IDS,
   TRANSITION_TYPES,
+  brandOf,
   formatIssues,
   imageRefs,
   mapImageRefs,
+  type Brand,
   type DesignWarning,
   type Presentation,
 } from "@slideia/core";
@@ -106,6 +108,18 @@ function text(t: string): CallToolResult {
   return { content: [{ type: "text", text: t }] };
 }
 
+/** The user's saved brand, appended to get_guide. */
+function brandSection(brand: Brand | null): string {
+  if (!brand)
+    return "## This user's saved brand\nNone. When the user gives brand colors or a logo and wants them in future decks, call save_brand.\n";
+  return (
+    "## This user's saved brand\n" +
+    `${JSON.stringify(brand)}\n` +
+    "create_presentation applies it automatically when meta.themeOverrides is omitted (do not resend it). " +
+    "Send meta.themeOverrides only when the user wants different colors for this deck ({} = plain theme).\n"
+  );
+}
+
 function errorResult(err: unknown): CallToolResult {
   let message: string;
   if (err instanceof PresentationError) message = `Invalid input:\n${formatIssues(err.issues)}`;
@@ -157,7 +171,13 @@ export function errorSummary(result: CallToolResult): string {
     .slice(0, 300);
 }
 
-const WRITE_TOOLS = new Set(["create_presentation", "apply_edits", "add_image", "render"]);
+const WRITE_TOOLS = new Set([
+  "create_presentation",
+  "apply_edits",
+  "add_image",
+  "render",
+  "save_brand",
+]);
 
 export function createMcpServer(
   service: PresentationService,
@@ -254,7 +274,55 @@ export function createMcpServer(
         "Returns the presentation format (layouts, elements, themes, transitions), design rules, editing operations and how to match the look of an existing deck (pptx). Call it once before creating or editing presentations.",
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    () => text(buildGuide()),
+    () =>
+      safely(async () => text(`${buildGuide()}\n${brandSection(await service.getBrand())}`)),
+  );
+
+  server.registerTool(
+    "save_brand",
+    {
+      title: "Salvar marca",
+      description:
+        "Saves the user's brand (base theme, colors, fonts, logo) on their account; every new presentation then uses it automatically. Use when the user asks to remember/keep their brand. Pass fromPresentation to copy the brand of an existing deck, or brand with the fields; clear: true forgets it.",
+      inputSchema: {
+        fromPresentation: z.string().optional().describe("Copy the brand of this presentation."),
+        brand: z
+          .looseObject({})
+          .optional()
+          .describe(
+            "{theme?, accent?, accent2?, cover?, fontHeading?, fontBody?, logo?: {asset, assetOnDark?, alt?, position?, size?}} (see get_guide; logo URLs are downloaded).",
+          ),
+        clear: z.boolean().optional().describe("Forget the saved brand."),
+      },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    ({ fromPresentation, brand, clear }) =>
+      safely(async () => {
+        if (clear) {
+          await service.saveBrand(null);
+          return text("The saved brand was forgotten; new presentations use the plain themes.");
+        }
+        const input = fromPresentation
+          ? brandOf((await service.get(fromPresentation)).meta)
+          : brand;
+        if (!input)
+          return { ...text("Pass fromPresentation or brand (or clear: true)."), isError: true };
+        const saved = await service.saveBrand(input);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Brand saved: ${JSON.stringify(saved)}. New presentations will use it automatically (existing ones are not changed; use apply_edits update_presentation to restyle them).`,
+            },
+          ],
+          structuredContent: { brand: saved },
+        };
+      }),
   );
 
   server.registerTool(

@@ -5,8 +5,10 @@ import {
   LAYOUT_IDS,
   THEMES,
   TRANSITION_TYPES,
+  brandOf,
   checkDesign,
   findFreeSlot,
+  type Brand,
   type BrandLogo,
   type ElementType,
   type Presentation,
@@ -14,7 +16,7 @@ import {
   type Transition,
 } from "@slideia/core/browser";
 import { FONTS } from "@slideia/renderer";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, resolveAsset } from "../api.js";
 import {
   DIRECTION_LABELS,
@@ -429,6 +431,7 @@ function DeckProps({ pres }: { pres: Presentation }) {
           />
         </Field>
       </div>
+      <SavedBrand pres={pres} />
       <Field label="Transição padrão">
         <TransitionFields
           value={m.defaultTransition}
@@ -446,6 +449,101 @@ function DeckProps({ pres }: { pres: Presentation }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Same brand, whatever the key order. */
+function sameBrand(a: Brand, b: Brand): boolean {
+  const canon = (v: unknown): unknown =>
+    v && typeof v === "object"
+      ? Object.fromEntries(
+          Object.entries(v)
+            .filter(([, x]) => x !== undefined)
+            .sort(([x], [y]) => x.localeCompare(y))
+            .map(([k, x]) => [k, canon(x)]),
+        )
+      : v;
+  return JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+}
+
+/** The account's saved brand: save this deck's, apply it here, or forget it. */
+function SavedBrand({ pres }: { pres: Presentation }) {
+  const [saved, setSaved] = useState<Brand | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let live = true;
+    api.brand().then(
+      (r) => live && setSaved(r.brand),
+      () => live && setSaved(null),
+    );
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (saved === undefined) return null;
+  const current = brandOf(pres.meta);
+  const same = saved !== null && sameBrand(saved, current);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    try {
+      await fn();
+    } catch (err) {
+      toast(`Não foi possível salvar a marca: ${(err as Error).message}`, "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const save = () =>
+    run(async () => {
+      setSaved((await api.saveBrand(current)).brand);
+      toast("Marca salva: as próximas apresentações já começam com ela.");
+    });
+  const apply = () => {
+    if (!saved) return;
+    const { theme, ...overrides } = saved;
+    mutate([
+      {
+        op: "update_presentation",
+        patch: {
+          ...(theme ? { theme } : {}),
+          themeOverrides: Object.keys(overrides).length ? overrides : null,
+        },
+      },
+    ]);
+  };
+  const forget = () =>
+    run(async () => {
+      if (!window.confirm("Esquecer a marca salva? As apresentações existentes não mudam.")) return;
+      await api.forgetBrand();
+      setSaved(null);
+      toast("Marca salva esquecida.");
+    });
+  return (
+    <Field
+      label="Minha marca"
+      group
+      hint="A marca salva é aplicada a toda apresentação nova, criada aqui ou pela IA."
+    >
+      {same ? (
+        <span className="saved-brand-ok">Esta apresentação usa a sua marca salva.</span>
+      ) : (
+        <div className="row wrap">
+          <button type="button" onClick={() => void save()} disabled={busy}>
+            {saved ? "Substituir pela desta apresentação" : "Salvar como minha marca"}
+          </button>
+          {saved && (
+            <button type="button" onClick={apply} disabled={busy}>
+              Aplicar minha marca
+            </button>
+          )}
+        </div>
+      )}
+      {saved && (
+        <button type="button" className="link-btn" onClick={() => void forget()} disabled={busy}>
+          Esquecer marca salva
+        </button>
+      )}
+    </Field>
   );
 }
 

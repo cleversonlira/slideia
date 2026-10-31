@@ -5,6 +5,7 @@ import { LAYOUTS, OVERFLOW_SLOT, findFreeSlot, getSlot } from "./layouts.js";
 import { toRichText } from "./markdown.js";
 import { plainText } from "./richtext.js";
 import {
+  Brand,
   CURRENT_SCHEMA_VERSION,
   PresentationInputSchema,
   PresentationSchema,
@@ -296,6 +297,13 @@ export function assertPresentation(value: unknown): Presentation {
  * Loads a presentation from any supported JSON: the stored format (possibly an older
  * schemaVersion) or the AI input format.
  */
+/** Validates a brand (stripping undefined keys); throws PresentationError with field paths. */
+export function parseBrand(value: unknown): Brand {
+  const parsed = Brand.safeParse(stripUndefined(value));
+  if (!parsed.success) throw new PresentationError(issuesFromZod(parsed.error, ["brand"]));
+  return parsed.data;
+}
+
 export function loadPresentation(value: unknown): Presentation {
   if (
     value &&

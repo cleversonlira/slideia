@@ -266,6 +266,15 @@ test("editor: outline mode, layout picker, undo and theme change", async ({ page
     .locator(".props-scroll")
     .screenshot({ path: test.info().outputPath("brand-panel.png") });
 
+  // Saved on the account, the brand is applied to the next new presentation.
+  await page.getByRole("button", { name: "Salvar como minha marca" }).click();
+  await expect(page.locator(".saved-brand-ok")).toBeVisible();
+  const branded = await call("create_presentation", { presentation: tenSlides() });
+  expect(JSON.stringify(branded.content)).toContain("saved brand was applied");
+  page.once("dialog", (d) => void d.accept());
+  await page.getByRole("button", { name: "Esquecer marca salva" }).click();
+  await expect(page.getByRole("button", { name: "Salvar como minha marca" })).toBeVisible();
+
   await page.locator(".seg button", { hasText: "Roteiro" }).click();
   const first = page.locator(".outline-slide").first().locator(".mini-editor").first();
   await first.click();

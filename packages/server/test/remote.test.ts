@@ -574,6 +574,36 @@ describe("OAuth + MCP with the official SDK client", () => {
     expect(r.isError).toBe(true);
     expect(r.content[0]!.text).toContain("not found");
     expect((await other.fetch(`${base}/api/presentations/${id}`)).status).toBe(404);
+
+    // Saved brand: per account, applied to the owner's new presentations only.
+    const put = await browser.fetch(`${base}/api/brand`, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "x-apresenta": "1" },
+      body: JSON.stringify({ brand: { theme: "tech", accent: "#0057b8" } }),
+    });
+    expect(put.status).toBe(200);
+    const deck = {
+      meta: { title: "Marca" },
+      slides: [{ layout: "cover", elements: [{ type: "title", text: "Marca" }] }],
+    };
+    const mine = (await client.callTool({
+      name: "create_presentation",
+      arguments: { presentation: deck },
+    })) as ToolResult;
+    const mineId = (mine.structuredContent as { id: string }).id;
+    const mineDoc = (await (await browser.fetch(`${base}/api/presentations/${mineId}`)).json()) as {
+      presentation: { meta: { theme: string; themeOverrides?: { accent?: string } } };
+    };
+    expect(mineDoc.presentation.meta.theme).toBe("tech");
+    expect(mineDoc.presentation.meta.themeOverrides?.accent).toBe("#0057b8");
+    expect(await (await other.fetch(`${base}/api/brand`)).json()).toEqual({ brand: null });
+    const theirs = (await c2.callTool({
+      name: "create_presentation",
+      arguments: { presentation: deck },
+    })) as ToolResult;
+    expect((theirs.content[0] as { text: string }).text).not.toContain("saved brand");
+    await browser.fetch(`${base}/api/brand`, { method: "DELETE", headers: { "x-apresenta": "1" } });
+    expect(await (await browser.fetch(`${base}/api/brand`)).json()).toEqual({ brand: null });
     await c2.close();
   });
 

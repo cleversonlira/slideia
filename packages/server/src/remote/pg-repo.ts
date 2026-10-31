@@ -245,6 +245,26 @@ export class PgPresentationRepo implements PresentationRepo {
     return Number(r[0]?.n ?? 0);
   }
 
+  async getBrand(): Promise<unknown> {
+    const r = await this.sql.query<{ doc: unknown }>("SELECT doc FROM brands WHERE owner = $1", [
+      this.owner,
+    ]);
+    const doc = r[0]?.doc;
+    if (doc === undefined) return null;
+    return typeof doc === "string" ? (JSON.parse(doc) as unknown) : doc;
+  }
+
+  async setBrand(brand: unknown): Promise<void> {
+    if (brand === null) {
+      await this.sql.query("DELETE FROM brands WHERE owner = $1", [this.owner]);
+      return;
+    }
+    await this.sql.query(
+      "INSERT INTO brands (owner, doc, updated_at) VALUES ($1, $2, now()) ON CONFLICT (owner) DO UPDATE SET doc = $2, updated_at = now()",
+      [this.owner, JSON.stringify(brand)],
+    );
+  }
+
   async deleteAll(): Promise<void> {
     const assets = await this.sql.query<{ id: string; mime: string }>(
       "SELECT id, mime FROM assets WHERE owner = $1",
@@ -253,6 +273,7 @@ export class PgPresentationRepo implements PresentationRepo {
     await this.sql.tx(async (t) => {
       await t.query("DELETE FROM presentations WHERE owner = $1", [this.owner]);
       await t.query("DELETE FROM assets WHERE owner = $1", [this.owner]);
+      await t.query("DELETE FROM brands WHERE owner = $1", [this.owner]);
     });
     for (const a of assets) await this.blobs.delete(assetKey(a.id, a.mime)).catch(() => undefined);
   }

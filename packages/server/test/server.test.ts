@@ -109,8 +109,10 @@ describe("MCP tools", () => {
       "open_editor",
       "preview",
       "render",
+      "save_brand",
     ]);
     expect(byName.get_guide!.annotations).toMatchObject({ readOnlyHint: true });
+    expect(byName.save_brand!.annotations).toMatchObject({ readOnlyHint: false });
     expect(byName.apply_edits!.annotations).toMatchObject({
       readOnlyHint: false,
       destructiveHint: true,

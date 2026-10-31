@@ -11,8 +11,11 @@ import {
   mainTextField,
   mapElementRichText,
   normalizePresentation,
+  parseBrand,
   plainText,
+  withBrand,
   richTextToMarkdown,
+  type Brand,
   type DesignWarning,
   type Element,
   type Operation,
@@ -126,7 +129,7 @@ export class PresentationService {
       );
     }
     const notes: string[] = [];
-    const prepared = await this.internalizeImages(input, notes);
+    const prepared = await this.internalizeImages(await this.branded(input, notes), notes);
     const presentation = normalizePresentation(prepared, { id: new IdAllocator().next("p") });
     this.checkSlideLimit(presentation);
     await this.repo.insert(presentation, author, channel, [
@@ -140,6 +143,51 @@ export class PresentationService {
       touched: ["*"],
     });
     return { presentation, warnings: checkDesign(presentation), notes };
+  }
+
+  // -------------------------------------------------------------------------
+  // Saved brand
+  // -------------------------------------------------------------------------
+
+  /** The saved brand, or null (an invalid stored value counts as none). */
+  async getBrand(): Promise<Brand | null> {
+    const raw = await this.repo.getBrand();
+    if (!raw) return null;
+    try {
+      return parseBrand(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Validates and saves the brand (logo URLs are downloaded and stored). Null forgets it. */
+  async saveBrand(input: unknown): Promise<Brand | null> {
+    if (input === null) {
+      await this.repo.setBrand(null);
+      return null;
+    }
+    parseBrand(input); // field errors before downloading anything
+    const notes: string[] = [];
+    const brand = parseBrand(await this.internalizeImages(input, notes));
+    if (notes.length) throw new ImageError(notes.join(" "));
+    await this.repo.setBrand(brand);
+    return brand;
+  }
+
+  /**
+   * New presentations follow the saved brand unless the input brings its own `themeOverrides`
+   * (even `{}`, which opts out).
+   */
+  private async branded(input: unknown, notes: string[]): Promise<unknown> {
+    if (!input || typeof input !== "object") return input;
+    const meta = (input as { meta?: unknown }).meta;
+    if (!meta || typeof meta !== "object" || "themeOverrides" in meta) return input;
+    const brand = await this.getBrand();
+    if (!brand) return input;
+    notes.push(
+      "The user's saved brand was applied (theme, colors, fonts, logo). To use other colors, send meta.themeOverrides (an empty object {} uses the plain theme).",
+    );
+    return { ...input, meta: withBrand(meta as Record<string, unknown>, brand) };
   }
 
   /** Imports a stored/exported presentation JSON as a new presentation (new id). */

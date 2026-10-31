@@ -426,6 +426,17 @@ export const ThemeOverrides = z
   .describe("Brand customization on top of the theme: colors, fonts and logo.");
 export type ThemeOverrides = z.infer<typeof ThemeOverrides>;
 
+export const Brand = z
+  .object({
+    theme: ThemeId.optional().describe("Base theme the brand is applied on."),
+    ...ThemeOverrides.shape,
+  })
+  .strict()
+  .describe(
+    "The user's saved brand: base theme, colors, fonts and logo applied to new presentations.",
+  );
+export type Brand = z.infer<typeof Brand>;
+
 const metaShape = {
   title: z.string().min(1).max(200),
   author: z.string().max(120).optional(),

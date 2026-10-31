@@ -67,6 +67,7 @@ Justificativa das anotações, caso o revisor pergunte:
 | `get_presentation`, `list_presentations`, `get_changes` | sim | não | Leitura das apresentações do próprio usuário. |
 | `apply_edits` | não | **sim** | Pode remover slides e elementos (há histórico de versões para desfazer). |
 | `add_image` | não | não | Guarda uma imagem nova na conta do usuário. |
+| `save_brand` | não | não | Guarda (ou esquece) a marca da conta, usada nas apresentações novas; não altera as existentes. |
 | `preview` | sim | não | Gera uma imagem dos slides. |
 | `render` | sim (remoto) | não | Devolve o link do HTML; no remoto não grava arquivos. |
 | `open_editor` | sim | não | Devolve links. |
